@@ -14,6 +14,7 @@ mod adjacency_matrix;
 mod graph;
 mod heuristics;
 mod traversal;
+mod local_search;
 
 pub use graph::Graph;
 pub use graph::Node;
