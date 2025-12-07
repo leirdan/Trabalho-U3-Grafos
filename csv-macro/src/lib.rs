@@ -5,6 +5,28 @@ use std::{
 
 use proc_macro::TokenStream;
 
+/// Defines a graph `g` and his associate types from a adjacency matrix represented in a csv.
+///
+/// Besides the graph `g`, the following items are defined:
+///     - `Node` type.
+///     - `Weight` type.
+///     - `Graph` type.
+///     - `NODE_COUNT` constant.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use csv-macro::graph_from_csv;
+///
+/// graph_from_csv!("problem.csv");
+///
+/// // Will define
+/// const NODE_COUNT: usize = <some_number>;
+/// type Node = usize;
+/// type Weight = f64;
+/// type Graph = [[Weight; NODE_COUNT] NODE_COUNT];
+/// const g: Graph = <some_data>;
+/// ```
 #[proc_macro]
 pub fn graph_from_csv(item: TokenStream) -> TokenStream {
     let item_str = item.to_string();
