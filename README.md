@@ -26,42 +26,50 @@ Trabalho-U3-Grafos/
 
 ### Pré-requisitos
 
-- [Cargo 1.90.0 (com rustc 1.93.0 nightly)](https://rust-lang.org/learn/get-started/)
+- [Cargo 1.90.0](https://rust-lang.org/learn/get-started/)
 - [Texlive (full)](https://tug.org/texlive/) e Texlive-lang-portuguese: pode ser encontrado nos gerenciadores de pacote comuns.
 - [Docker](https://www.docker.com/): Alternativa para compilar o $\LaTeX$, caso não queira instalar o `texlive`
 - [Graphviz](https://www.graphviz.org/download/): Para converter os arquivos `.dot` em imagens `.png`
 
 ### Compilação e testes
 
-> [!NOTE]
-> Antes de testar o projeto, troque a versão do compilador para a versão nightly com:
->
-> ```bash
-> rustup override set nightly
-> ```
+É possível fazer isso via cargo ou Makefile.
 
-```bash
-# Compila o projeto
-cargo b
+- **cargo**
 
-# Executa binários na pasta examples/
-cargo r --example [example]
+  ```bash
+  # Compila o projeto
+  cargo br
 
-# Executa testes unitários
-cargo t
+  # Executa binários na pasta examples/
+  cargo er [example]
 
-# Executa benchmarks
-cargo bench
+  # Executa testes unitários
+  cargo tr
 
-# Verifica o código usando o clippy
-cargo clippy
+  # Verifica o código usando o clippy
+  cargo clippy
 
-# Formata o código
-cargo fmt
+  # Formata o código
+  cargo fmt
+  ```
 
-# Compila documentação
-cargo doc
-```
+- **Makefile**
+
+  ```bash
+  $ make help
+  Available targets:
+    build           Builds the program with release mode
+    check           Performs a cargo check with release mode
+    clean           Cleans cargo generated artifacts
+    clippy          Runs clippy
+    example         Runs a given a example e.g. `make example -- example1`
+    fmt_check       Check if the code is formatted
+    fmt             Formats the code
+    help            Show this help message
+    run             Runs main in release mode
+    test            Runs all tests
+  ```
 
 #### $\LaTeX$
 
