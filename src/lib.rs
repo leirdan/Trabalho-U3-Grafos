@@ -10,25 +10,8 @@
 
 #![feature(impl_trait_in_assoc_type)]
 
-mod adjacency_matrix;
-mod graph;
 mod heuristics;
-mod traversal;
-
-pub use graph::Graph;
-pub use graph::Node;
-pub use graph::UndirectedGraph;
-pub use graph::WeightedGraph;
 
 pub mod graphs {
-    pub use crate::adjacency_matrix::AdjacencyMatrix;
     pub use crate::heuristics::nearest_neighbour;
-    pub use crate::traversal::BfsEvent;
-    pub use crate::traversal::BfsIter;
-    pub use crate::traversal::BiconnectedComponentsIter;
-    pub use crate::traversal::DfsEdgesIter;
-    pub use crate::traversal::DfsEvent;
-    pub use crate::traversal::DfsIter;
-    pub use crate::traversal::Edge;
-    pub const MAX: usize = usize::MAX;
 }

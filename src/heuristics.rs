@@ -1,5 +1,3 @@
-use crate::graphs::MAX;
-
 /// Implementação da Heurística do Vizinho Mais Próximo, um algoritmo guloso que gera um caminho
 /// para o Problema do Caixeiro Viaijante.
 ///
@@ -41,7 +39,7 @@ pub fn nearest_neighbour(graph: Vec<Vec<usize>>, start: usize) -> (Vec<usize>, u
     let mut next_on_path: Option<usize> = None;
 
     while visited_count != graph.len() {
-        better_cost = MAX;
+        better_cost = usize::MAX;
 
         for (i, val) in visited.iter().enumerate() {
             if *val || current_node == i {
@@ -78,11 +76,11 @@ mod tests {
     #[test]
     fn test_1() {
         let graph = vec![
-            vec![MAX, 1, 2, 4, 3],
-            vec![1, MAX, 7, 2, 5],
-            vec![2, 7, MAX, 8, 1],
-            vec![4, 2, 8, MAX, 6],
-            vec![3, 5, 1, 6, MAX],
+            vec![usize::MAX, 1, 2, 4, 3],
+            vec![1, usize::MAX, 7, 2, 5],
+            vec![2, 7, usize::MAX, 8, 1],
+            vec![4, 2, 8, usize::MAX, 6],
+            vec![3, 5, 1, 6, usize::MAX],
         ];
 
         let (path, cost) = nearest_neighbour(graph, 0);
@@ -95,10 +93,10 @@ mod tests {
     #[test]
     fn test_2() {
         let graph = vec![
-            vec![MAX, 1, 3, 6],
-            vec![1, MAX, 2, 3],
-            vec![3, 2, MAX, 1],
-            vec![6, 3, 1, MAX],
+            vec![usize::MAX, 1, 3, 6],
+            vec![1, usize::MAX, 2, 3],
+            vec![3, 2, usize::MAX, 1],
+            vec![6, 3, 1, usize::MAX],
         ];
 
         let (path, cost) = nearest_neighbour(graph, 0);
@@ -111,10 +109,10 @@ mod tests {
     #[test]
     fn test_3() {
         let graph = vec![
-            vec![MAX, 1, 3, 1000],
-            vec![1, MAX, 2, 3],
-            vec![3, 2, MAX, 1],
-            vec![1000, 3, 1, MAX],
+            vec![usize::MAX, 1, 3, 1000],
+            vec![1, usize::MAX, 2, 3],
+            vec![3, 2, usize::MAX, 1],
+            vec![1000, 3, 1, usize::MAX],
         ];
 
         let (path, cost) = nearest_neighbour(graph, 0);

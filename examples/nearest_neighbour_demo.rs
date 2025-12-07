@@ -1,12 +1,12 @@
-use graphs_algorithms::graphs::{MAX, nearest_neighbour};
+use graphs_algorithms::graphs::nearest_neighbour;
 
 fn main() {
-    let mut graph = vec![
-        vec![MAX, 1, 2, 4, 3],
-        vec![1, MAX, 7, 2, 5],
-        vec![2, 7, MAX, 8, 1],
-        vec![4, 2, 8, MAX, 6],
-        vec![3, 5, 1, 6, MAX],
+    let graph = vec![
+        vec![usize::MAX, 1, 2, 4, 3],
+        vec![1, usize::MAX, 7, 2, 5],
+        vec![2, 7, usize::MAX, 8, 1],
+        vec![4, 2, 8, usize::MAX, 6],
+        vec![3, 5, 1, 6, usize::MAX],
     ];
 
     let (path, cost) = nearest_neighbour(graph, 0);
