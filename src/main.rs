@@ -1,11 +1,11 @@
 #![feature(slice_swap_unchecked)]
 
-use std::array;
+use std::{array, time::Instant};
 
 use csv_macro::graph_from_csv;
 use rand::{rngs::ThreadRng, seq::SliceRandom};
 
-graph_from_csv!("data/grasp-km.csv");
+graph_from_csv!("data/grasp-km/data.csv");
 
 /// A metric for representing the quality of a solution to the TSP problem.
 type Fit = f64;
@@ -112,6 +112,7 @@ fn mutate(i: &mut Individual) {
 const MAX_PSIZE: usize = 200;
 
 fn main() {
+    let now = Instant::now();
     let mut rng = rand::rng();
 
     // Load hyper-params.
@@ -119,7 +120,7 @@ fn main() {
     let itnum: usize = args[1].parse().unwrap(); // Number of iterations (or generations).
     let psize: usize = args[2].parse().unwrap(); // Size of the population by number of individuals.
     let mrate: f64 = args[3].parse().unwrap(); // Mutation rate.
-    assert!(psize < MAX_PSIZE);
+    assert!(psize <= MAX_PSIZE);
 
     // Init population.
     let p: &mut Population = &mut [[0; NODE_COUNT]; MAX_PSIZE][..psize];
@@ -130,12 +131,13 @@ fn main() {
         love(&mut rng, mrate, p);
     }
 
-    // Print best fitness.
+    // Print best fitness and time taken.
     println!(
-        "{}",
+        "{} {}",
         p.iter()
             .map(fit)
             .min_by(|x, y| x.total_cmp(y))
-            .unwrap_or(f64::INFINITY)
+            .unwrap_or(f64::INFINITY),
+        now.elapsed().as_secs_f64()
     )
 }
