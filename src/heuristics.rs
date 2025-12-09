@@ -1,37 +1,40 @@
-/// Implementação da Heurística do Vizinho Mais Próximo, um algoritmo guloso que gera um caminho
+use crate::graphs::Graph;
 use crate::local_search::Solution;
 
-/// para o Problema do Caixeiro Viaijante.
+/// Implementação da heurística do Vizinho Mais Próximo (Nearest Neighbor), um algoritmo
+/// guloso que gera um caminho para o Problema do Caixeiro Viajante.
 ///
 /// # Argumentos
-/// - `graph`: um grafo representado em Matriz de Adjacência;
-/// - `start`: o nó inicial por onde iniciará o caminho.
+/// - `graph`: grafo representado em matriz de adjacência;
+/// - `start`: nó inicial por onde o caminho começará.
 ///
 /// # Saída
-/// - Uma dupla composta pelo `path` (um vetor de vértices) e pelo `cost` (custo total da solução).
+/// Retorna uma `Solution`, com a rota encontrada e o custo dela.
 ///
 /// # Detalhes de funcionamento
-/// 1. Criação de um vetor de booleanos `visited`, onde podemos descobrir se um vértice foi visitado
-///     com complexidade O(1), e marcamos todos os vértices como "não visitados".
-/// 2. Marcação do vértice inicial como visitado.
-/// 3. Criação de um contador que marca a quantidade total de visitados. É uma maneira barata de determinar o fim do loop
-///     em comparação a uma função de checagem por visitados de complexidade O(n).
-/// 4. Enquanto houverem vértices não visitados, itera sobre cada vértice não visitado da matriz
-///     à procura da aresta de menor custo. Ao encontrá-la, adiciona o vértice adjacente dessa aresta no caminho,
-///     marca-o como visitado e incrementa o contador.
-/// 5. Ao fim do loop, contabiliza o custo da aresta do vértice final do caminho até o vértice inicial, sem adicionar
-///     novamente o inicial no caminho.
-/// 6. Retorna o caminho encontrado e o custo total dele.
-/// - Este algoritmo não insere ao fim do caminho o vértice inicial, pois é assumido que existe um
-///     ciclo hamiltoniano ao fim deste caminho, logo, não é uma informação relevante.
-pub fn nearest_neighbour(graph: &Vec<Vec<usize>>, start: usize) -> Solution {
+/// 1. Cria um vetor booleano `visited`, onde é possível verificar em O(1) se um
+///    vértice já foi visitado. Todos começam como "não visitados".
+/// 2. Marca o vértice inicial como visitado.
+/// 3. Cria um contador com a quantidade de vértices visitados. Isso permite
+///    determinar o fim do loop sem precisar usar uma checagem O(n).
+/// 4. Enquanto houver vértices não visitados, itera sobre eles na matriz em busca
+///    da aresta de menor custo. Ao encontrá-la, adiciona seu vértice adjacente ao
+///    caminho, marca-o como visitado e incrementa o contador.
+/// 5. Ao fim do loop, adiciona ao custo a aresta que liga o último vértice do
+///    caminho ao vértice inicial, sem adicionar este novamente ao caminho.
+/// 6. Retorna o caminho encontrado e o custo total.
+///
+/// Observação: este algoritmo **não** insere o vértice inicial no fim do caminho,
+/// pois assume-se que há um ciclo hamiltoniano implícito; portanto, adicionar o
+/// vértice inicial novamente não é necessário.
+pub fn nearest_neighbour(graph: &Graph, start: usize) -> Solution {
     // Sem muitas abstrações em razão de uma suposta eficiência!!
 
     let mut visited: Vec<bool> = vec![false; graph.len()];
     let mut path: Vec<usize> = Vec::new();
     path.push(start);
 
-    let mut cost = 0;
+    let mut cost: f64 = 0.0;
     let mut current_node = start;
     visited[current_node] = true;
 
@@ -41,7 +44,7 @@ pub fn nearest_neighbour(graph: &Vec<Vec<usize>>, start: usize) -> Solution {
     let mut next_on_path: Option<usize> = None;
 
     while visited_count != graph.len() {
-        better_cost = usize::MAX;
+        better_cost = f64::INFINITY;
 
         for (i, val) in visited.iter().enumerate() {
             if *val || current_node == i {
@@ -91,19 +94,20 @@ pub fn nearest_neighbour(graph: &Vec<Vec<usize>>, start: usize) -> Solution {
 ///    ao ciclo é mínima (critério de *nearest*).
 /// 5. Para o vértice escolhido, testa-se todas as arestas consecutivas do ciclo a fim de encontrar
 ///    a posição de inserção que minimize o custo adicional:
-///       custo_extra = d(u, r*) + d(r*, v) − d(u, v).
+///    custo_extra = d(u, r*) + d(r*, v) − d(u, v).
 /// 6. O vértice `r*` é então inserido na melhor posição do ciclo e marcado como pertencente ao ciclo.
 /// 7. O vetor `min_dist` é atualizado em tempo O(n), ajustando as distâncias mínimas dos vértices
 ///    ainda não inseridos.
 /// 8. O processo continua até que todos os vértices estejam presentes no ciclo.
-pub fn nearest_insertion(graph: &Vec<Vec<usize>>, start: usize) -> Vec<usize> {
+#[allow(dead_code)]
+pub fn nearest_insertion(graph: &Graph, start: usize) -> Vec<usize> {
     let n = graph.len();
     let mut in_cycle = vec![false; n];
-    let mut min_dist = vec![MAX; n];
+    let mut min_dist = vec![f64::INFINITY; n];
     in_cycle[start] = true;
 
     let mut first: Option<usize> = None;
-    let mut best = MAX;
+    let mut best = f64::INFINITY;
 
     for i in 0..n {
         if i != start && graph[start][i] < best {
@@ -124,7 +128,7 @@ pub fn nearest_insertion(graph: &Vec<Vec<usize>>, start: usize) -> Vec<usize> {
     let mut count_in_cycle = 2;
     while count_in_cycle < n {
         let mut r_star: Option<usize> = None;
-        let mut best_dist = MAX;
+        let mut best_dist = f64::INFINITY;
 
         for v in 0..n {
             if !in_cycle[v] && min_dist[v] < best_dist {
@@ -134,7 +138,7 @@ pub fn nearest_insertion(graph: &Vec<Vec<usize>>, start: usize) -> Vec<usize> {
         }
 
         let r_star = r_star.expect("No candidate vertex found");
-        let mut best_extra = MAX;
+        let mut best_extra = f64::INFINITY;
         let mut best_pos = 0;
 
         for i in 0..cycle.len() - 1 {
@@ -145,7 +149,8 @@ pub fn nearest_insertion(graph: &Vec<Vec<usize>>, start: usize) -> Vec<usize> {
             let dv = graph[r_star][v];
             let uv = graph[u][v];
 
-            let extra = du.saturating_add(dv).saturating_sub(uv);
+            // let extra = du.saturating_add(dv).saturating_sub(uv);
+            let extra = du + dv - uv;
 
             if extra < best_extra {
                 best_extra = extra;
@@ -172,36 +177,37 @@ pub fn nearest_insertion(graph: &Vec<Vec<usize>>, start: usize) -> Vec<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    const INF: f64 = f64::INFINITY;
 
     #[test]
-    fn test_1() {
+    fn nearest_neighbour_1() {
         let graph = vec![
-            vec![usize::MAX, 1, 2, 4, 3],
-            vec![1, usize::MAX, 7, 2, 5],
-            vec![2, 7, usize::MAX, 8, 1],
-            vec![4, 2, 8, usize::MAX, 6],
-            vec![3, 5, 1, 6, usize::MAX],
+            vec![INF, 1.0, 2.0, 4.0, 3.0],
+            vec![1.0, INF, 7.0, 2.0, 5.0],
+            vec![2.0, 7.0, INF, 8.0, 1.0],
+            vec![4.0, 2.0, 8.0, INF, 6.0],
+            vec![3.0, 5.0, 1.0, 6.0, INF],
         ];
 
         let solution = nearest_neighbour(&graph, 0);
 
-        assert_eq!(solution.cost, 12);
+        assert_eq!(solution.cost, 12.0);
         assert_eq!(solution.route[0], 0);
         assert_eq!(solution.route.last(), Some(2).as_ref());
     }
 
     #[test]
-    fn test_2() {
+    fn nearest_neighbour_2() {
         let graph = vec![
-            vec![usize::MAX, 1, 3, 6],
-            vec![1, usize::MAX, 2, 3],
-            vec![3, 2, usize::MAX, 1],
-            vec![6, 3, 1, usize::MAX],
+            vec![INF, 1.0, 3.0, 6.0],
+            vec![1.0, INF, 2.0, 3.0],
+            vec![3.0, 2.0, INF, 1.0],
+            vec![6.0, 3.0, 1.0, INF],
         ];
 
         let solution = nearest_neighbour(&graph, 0);
 
-        assert_eq!(solution.cost, 10);
+        assert_eq!(solution.cost, 10.0);
         assert_eq!(solution.route[0], 0);
         assert_eq!(solution.route.last(), Some(3).as_ref());
     }
@@ -209,21 +215,21 @@ mod tests {
     #[test]
     fn test_3() {
         let graph = vec![
-            vec![usize::MAX, 1, 3, 1000],
-            vec![1, usize::MAX, 2, 3],
-            vec![3, 2, usize::MAX, 1],
-            vec![1000, 3, 1, usize::MAX],
+            vec![INF, 1.0, 3.0, 1000.0],
+            vec![1.0, INF, 2.0, 3.0],
+            vec![3.0, 2.0, INF, 1.0],
+            vec![1000.0, 3.0, 1.0, INF],
         ];
 
         let solution = nearest_neighbour(&graph, 0);
 
-        assert_eq!(solution.cost, 1004);
+ assert_eq!(solution.cost, 1004.0);
         assert_eq!(solution.route[0], 0);
         assert_eq!(solution.route.last(), Some(3).as_ref());
     }
 
-    fn calc_cost(graph: &Vec<Vec<usize>>, path: &Vec<usize>) -> usize {
-        let mut cost = 0;
+    fn calc_cost(graph: &Graph, path: &Vec<usize>) -> f64{
+        let mut cost = 0.0;
         for i in 0..path.len() - 1 {
             cost += graph[path[i]][path[i + 1]];
         }
@@ -249,52 +255,52 @@ mod tests {
     }
 
     #[test]
-    fn test_tsp_1() {
+    fn tsp_1() {
         let graph = vec![
-            vec![usize::MAX, 10, 15, 20],
-            vec![10, usize::MAX, 35, 25],
-            vec![15, 35, usize::MAX, 30],
-            vec![20, 25, 30, usize::MAX],
+            vec![INF, 10.0, 15.0, 20.0],
+            vec![10.0, INF, 35.0, 25.0],
+            vec![15.0, 35.0, INF, 30.0],
+            vec![20.0, 25.0, 30.0, INF],
         ];
 
         let path = nearest_insertion(&graph, 0);
         let cost = calc_cost(&graph, &path);
 
         assert!(is_valid_cycle(&path, graph.len()));
-        assert!(cost > 0);
+        assert!(cost > 0.0);
     }
 
     #[test]
-    fn test_tsp_2() {
-        let graph = vec![
-            vec![usize::MAX, 2, 9, 10, 7],
-            vec![2, usize::MAX, 6, 4, 3],
-            vec![9, 6, usize::MAX, 8, 5],
-            vec![10, 4, 8, usize::MAX, 6],
-            vec![7, 3, 5, 6, usize::MAX],
+    fn tsp_2() {
+       let graph = vec![
+            vec![INF, 2.0, 9.0, 10.0, 7.0],
+            vec![2.0, INF, 6.0, 4.0, 3.0],
+            vec![9.0, 6.0, INF, 8.0, 5.0],
+            vec![10.0, 4.0, 8.0, INF, 6.0],
+            vec![7.0, 3.0, 5.0, 6.0, INF],
         ];
 
         let path = nearest_insertion(&graph, 0);
         let cost = calc_cost(&graph, &path);
 
         assert!(is_valid_cycle(&path, graph.len()));
-        assert!(cost > 0);
+        assert!(cost > 0.0);
     }
 
     #[test]
-    fn test_tsp_3() {
+    fn tsp_3() {
         let graph = vec![
-            vec![usize::MAX, 1, 50, 100, 1],
-            vec![1, usize::MAX, 1, 50, 100],
-            vec![50, 1, usize::MAX, 1, 50],
-            vec![100, 50, 1, usize::MAX, 1],
-            vec![1, 100, 50, 1, usize::MAX],
+            vec![INF, 1.0, 50.0, 100.0, 1.0],
+            vec![1.0, INF, 1.0, 50.0, 100.0],
+            vec![50.0, 1.0, INF, 1.0, 50.0],
+            vec![100.0, 50.0, 1.0, INF, 1.0],
+            vec![1.0, 100.0, 50.0, 1.0, INF],
         ];
 
         let path = nearest_insertion(&graph, 0);
         let cost = calc_cost(&graph, &path);
 
         assert!(is_valid_cycle(&path, graph.len()));
-        assert!(cost > 0);
+        assert!(cost > 0.0);
     }
 }
