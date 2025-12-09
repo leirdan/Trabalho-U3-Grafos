@@ -109,9 +109,9 @@ pub fn nearest_insertion(graph: &Graph, start: usize) -> Vec<usize> {
     let mut first: Option<usize> = None;
     let mut best = f64::INFINITY;
 
-    for i in 0..n {
-        if i != start && graph[start][i] < best {
-            best = graph[start][i];
+    for (i, row) in graph.iter().enumerate().take(n) {
+        if i != start && row[start] < best {
+            best = row[start];
             first = Some(i);
         }
     }
