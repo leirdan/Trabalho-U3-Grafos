@@ -44,15 +44,12 @@ impl Solution {
 }
 
 impl LocalSearch for Solution {
-    // TODO: realmente precisamos do best e first improvement...?
     fn swap(&self, graph: &Vec<Vec<usize>>, start: usize, imp: SearchType) -> Self {
         let mut best_solution: Solution = self.clone();
         let mut found_better_solution = true;
 
         while found_better_solution {
             found_better_solution = false;
-
-            // nada eficiente, mas é o comportamento comum..
 
             let solutions = best_solution.neighbourhood_by_swap(&graph, start);
 
@@ -93,16 +90,15 @@ impl LocalSearch for Solution {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graphs::MAX;
 
     #[test]
     fn graph_1_first_imp_test_1() {
         let graph = vec![
-            vec![MAX, 1, 2, 4, 3],
-            vec![1, MAX, 7, 2, 5],
-            vec![2, 7, MAX, 8, 1],
-            vec![4, 2, 8, MAX, 6],
-            vec![3, 5, 1, 6, MAX],
+            vec![usize::MAX, 1, 2, 4, 3],
+            vec![1, usize::MAX, 7, 2, 5],
+            vec![2, 7, usize::MAX, 8, 1],
+            vec![4, 2, 8, usize::MAX, 6],
+            vec![3, 5, 1, 6, usize::MAX],
         ];
 
         let mut solution = Solution {
@@ -117,11 +113,11 @@ mod tests {
     #[test]
     fn graph_1_first_imp_test_2() {
         let graph = vec![
-            vec![MAX, 1, 2, 4, 3],
-            vec![1, MAX, 7, 2, 5],
-            vec![2, 7, MAX, 8, 1],
-            vec![4, 2, 8, MAX, 6],
-            vec![3, 5, 1, 6, MAX],
+            vec![usize::MAX, 1, 2, 4, 3],
+            vec![1, usize::MAX, 7, 2, 5],
+            vec![2, 7, usize::MAX, 8, 1],
+            vec![4, 2, 8, usize::MAX, 6],
+            vec![3, 5, 1, 6, usize::MAX],
         ];
 
         let mut solution = Solution {
@@ -136,11 +132,11 @@ mod tests {
     #[test]
     fn graph_1_first_imp_test_3() {
         let graph = vec![
-            vec![MAX, 1, 2, 4, 3],
-            vec![1, MAX, 7, 2, 5],
-            vec![2, 7, MAX, 8, 1],
-            vec![4, 2, 8, MAX, 6],
-            vec![3, 5, 1, 6, MAX],
+            vec![usize::MAX, 1, 2, 4, 3],
+            vec![1, usize::MAX, 7, 2, 5],
+            vec![2, 7, usize::MAX, 8, 1],
+            vec![4, 2, 8, usize::MAX, 6],
+            vec![3, 5, 1, 6, usize::MAX],
         ];
 
         let mut solution = Solution {
@@ -155,11 +151,11 @@ mod tests {
     #[test]
     fn graph_1_best_imp_test_1() {
         let graph = vec![
-            vec![MAX, 1, 2, 4, 3],
-            vec![1, MAX, 7, 2, 5],
-            vec![2, 7, MAX, 8, 1],
-            vec![4, 2, 8, MAX, 6],
-            vec![3, 5, 1, 6, MAX],
+            vec![usize::MAX, 1, 2, 4, 3],
+            vec![1, usize::MAX, 7, 2, 5],
+            vec![2, 7, usize::MAX, 8, 1],
+            vec![4, 2, 8, usize::MAX, 6],
+            vec![3, 5, 1, 6, usize::MAX],
         ];
 
         let mut solution = Solution {
@@ -174,11 +170,11 @@ mod tests {
     #[test]
     fn graph_1_best_imp_test_2() {
         let graph = vec![
-            vec![MAX, 1, 2, 4, 3],
-            vec![1, MAX, 7, 2, 5],
-            vec![2, 7, MAX, 8, 1],
-            vec![4, 2, 8, MAX, 6],
-            vec![3, 5, 1, 6, MAX],
+            vec![usize::MAX, 1, 2, 4, 3],
+            vec![1, usize::MAX, 7, 2, 5],
+            vec![2, 7, usize::MAX, 8, 1],
+            vec![4, 2, 8, usize::MAX, 6],
+            vec![3, 5, 1, 6, usize::MAX],
         ];
 
         let mut solution = Solution {

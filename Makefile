@@ -1,26 +1,39 @@
-SRC_DIR := examples/dot
-OUT_DIR := examples/output
+# This enables unstables features in the stable compiler.
+export RUSTC_BOOTSTRAP=1
 
-DOT_FILES := $(shell find $(SRC_DIR) -name '*.dot')
+all: build
 
-DIRS := $(shell find $(SRC_DIR) -type d)
+build: ## Builds the program with release mode
+	cargo br
 
-PNG_FILES := $(DOT_FILES:$(SRC_DIR)/%.dot=$(OUT_DIR)/%.png)
+check: ## Performs a cargo check with release mode
+	cargo cr
 
-png: dirs $(PNG_FILES)
+example: ## Runs a given a example e.g. `make example AGRS=example1`
+	cargo er $(ARGS)
 
-dirs:
-	@echo "Creating folder structure in $(OUT_DIR)..."
-	@for d in $(DIRS); do \
-		mkdir -p "$(OUT_DIR)/$${d#$(SRC_DIR)/}"; \
-	done
-	@rm -rf $(OUT_DIR)/examples
+clean: ## Cleans cargo generated artifacts
+	cargo clean
 
-$(OUT_DIR)/%.png: $(SRC_DIR)/%.dot
-	@echo "Processing '$<' -> '$@'"
-	@mkdir -p "$(dir $@)"
-	@dot -Tpng "$<" -o "$@"
+clippy: ## Runs clippy
+	unset RUSTC_BOOTSTRAP && cargo clippy --workspace -- -D warnings
+	unset RUSTC_BOOTSTRAP && cargo clippy --tests --workspace -- -D warnings
 
-clean-png:
-	@echo "Cleaning $(OUT_DIR)..."
-	rm -rf $(OUT_DIR)
+test: ## Runs all tests
+	unset RUSTC_BOOTSTRAP && cargo tr --all
+
+run: ## Runs main in release mode
+	cargo rr
+
+fmt: ## Formats the code
+	cargo fmt
+
+fmt_check: ## Check if the code is formatted
+	cargo fmt -- --check
+
+help: ## Show this help message
+	@echo "Available targets:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
+
+
+.PHONY: all build check example clean clippy test run fmt fmt_check help

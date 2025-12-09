@@ -1,0 +1,11 @@
+[env]
+RUSTC_BOOTSTRAP = "1"
+
+[alias]
+br = "build --release"          # Build with release profile
+cr = "check --release"          # Type check with release profile
+dr = "doc --release"            # Generate documentation with release profile
+tr = "test --release"           # Run tests with release profile
+rr = "run --release"            # Run with release profile
+er = "run --release --example"  # Run a example with the release profile
+e  = "run --example"            # Run a example with the default profile

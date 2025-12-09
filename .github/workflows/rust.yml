@@ -15,31 +15,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install nightly toolchain
-        run: rustup default nightly
-
-      - name: Add rustfmt
-        run: rustup component add rustfmt --toolchain nightly
+      - name: Install stable toolchain (fmt, clippy)
+        run: rustup toolchain install stable --profile minimal -c rustfmt,clippy
 
       - name: Format check
-        run: cargo fmt -- --check
-
-      - name: Add clippy
-        run: rustup component add clippy --toolchain nightly
+        run: make fmt_check
 
       - name: Clippy check
-        run: cargo clippy -- -D warnings
+        run: make clippy
 
   build-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install nightly toolchain
-        run: rustup default nightly
+      - name: Install stable toolchain (fmt, clippy)
+        run: rustup toolchain install stable --profile minimal -c rustfmt,clippy
 
       - name: Build
-        run: cargo build --verbose
+        run: make build
 
       - name: Run tests
-        run: cargo test --verbose
+        run: make test
