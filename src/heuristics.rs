@@ -223,12 +223,12 @@ mod tests {
 
         let solution = nearest_neighbour(&graph, 0);
 
- assert_eq!(solution.cost, 1004.0);
+        assert_eq!(solution.cost, 1004.0);
         assert_eq!(solution.route[0], 0);
         assert_eq!(solution.route.last(), Some(3).as_ref());
     }
 
-    fn calc_cost(graph: &Graph, path: &Vec<usize>) -> f64{
+    fn calc_cost(graph: &Graph, path: &Vec<usize>) -> f64 {
         let mut cost = 0.0;
         for i in 0..path.len() - 1 {
             cost += graph[path[i]][path[i + 1]];
@@ -272,7 +272,7 @@ mod tests {
 
     #[test]
     fn tsp_2() {
-       let graph = vec![
+        let graph = vec![
             vec![INF, 2.0, 9.0, 10.0, 7.0],
             vec![2.0, INF, 6.0, 4.0, 3.0],
             vec![9.0, 6.0, INF, 8.0, 5.0],
