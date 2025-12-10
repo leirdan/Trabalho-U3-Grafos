@@ -137,8 +137,32 @@ impl LocalSearch for Solution {
         best_solution
     }
 
-    fn two_opt(&self, _graph: &MatrixGraph) -> Self {
-        self.clone()
+    fn two_opt(&self, graph: &MatrixGraph) -> Self {
+        let n = graph.len();
+        let mut current_solution: Solution = self.clone();
+
+        'outer: for i in 0..(n - 2) {
+            for j in i + 2..n {
+                let mut new_route: Vec<usize> = Vec::with_capacity(n);
+
+                new_route.extend_from_slice(&self.route[0..=i]);
+                new_route.extend(self.route[i + 1..=j].iter().rev());
+
+                if j + 1 < n {
+                    new_route.extend_from_slice(&self.route[j + 1..]);
+                }
+
+                let new_cost = Self::calculate_cost(&new_route, graph);
+                if new_cost < current_solution.cost {
+                    current_solution = Solution {
+                        route: new_route,
+                        cost: new_cost,
+                    };
+                    break 'outer;
+                }
+            }
+        }
+        current_solution
     }
 
     fn shift(&self, graph: &MatrixGraph, start: usize) -> Self {
@@ -310,5 +334,46 @@ mod tests {
 
         solution = solution.or_opt(&graph);
         assert_eq!(solution.cost, 12.0);
+    }
+
+    #[test]
+    fn two_opt_test_1() {
+        let graph = vec![
+            vec![INF, 1.0, 9.0, 9.0, 1.0],
+            vec![1.0, INF, 1.0, 9.0, 9.0],
+            vec![9.0, 1.0, INF, 1.0, 9.0],
+            vec![9.0, 9.0, 1.0, INF, 1.0],
+            vec![1.0, 9.0, 9.0, 1.0, INF],
+        ];
+
+        let mut solution = Solution {
+            route: vec![0, 3, 2, 1, 4],
+            cost: 21.0,
+        };
+
+        solution = solution.two_opt(&graph);
+        assert_eq!(solution.cost, 5.0);
+        assert_eq!(solution.route, [0, 1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn two_opt_test_2() {
+        let graph = vec![
+            vec![INF, 2.0, 8.0, 8.0, 2.0],
+            vec![2.0, INF, 2.0, 8.0, 8.0],
+            vec![8.0, 2.0, INF, 2.0, 8.0],
+            vec![8.0, 8.0, 2.0, INF, 2.0],
+            vec![2.0, 8.0, 8.0, 2.0, INF],
+        ];
+
+        let mut solution = Solution {
+            route: vec![0, 2, 4, 1, 3],
+            cost: 40.0,
+        };
+
+        solution = solution.two_opt(&graph);
+
+        assert_eq!(solution.cost, 28.0);
+        assert_eq!(solution.route, [0, 4, 2, 1, 3]);
     }
 }
