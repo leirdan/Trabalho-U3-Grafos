@@ -1,4 +1,4 @@
-use crate::graphs::Graph;
+use crate::graphs::MatrixGraph;
 use crate::local_search::{LocalSearch, Solution};
 
 /// Implementação da heurística do Vizinho Mais Próximo (Nearest Neighbor), um algoritmo
@@ -27,7 +27,7 @@ use crate::local_search::{LocalSearch, Solution};
 /// Observação: este algoritmo **não** insere o vértice inicial no fim do caminho,
 /// pois assume-se que há um ciclo hamiltoniano implícito; portanto, adicionar o
 /// vértice inicial novamente não é necessário.
-pub fn nearest_neighbour(graph: &Graph, start: usize) -> Solution {
+pub fn nearest_neighbour(graph: &MatrixGraph, start: usize) -> Solution {
     let mut visited: Vec<bool> = vec![false; graph.len()];
     let mut path: Vec<usize> = Vec::new();
     path.push(start);
@@ -99,7 +99,7 @@ pub fn nearest_neighbour(graph: &Graph, start: usize) -> Solution {
 /// 8. O processo continua até que todos os vértices estejam presentes no ciclo.
 #[allow(dead_code)]
 // TODO: MUDAR PARA CHEAPEST_INSERTION
-pub fn nearest_insertion(graph: &Graph, start: usize) -> Solution {
+pub fn nearest_insertion(graph: &MatrixGraph, start: usize) -> Solution {
     let n = graph.len();
     let mut in_cycle = vec![false; n];
     let mut min_dist = vec![f64::INFINITY; n];
@@ -177,7 +177,7 @@ pub fn nearest_insertion(graph: &Graph, start: usize) -> Solution {
 }
 
 #[allow(dead_code)]
-pub fn nearest_neighbour_with_swap(graph: &Graph, start: usize) -> Solution {
+pub fn nearest_neighbour_with_swap(graph: &MatrixGraph, start: usize) -> Solution {
     let first_solution = nearest_neighbour(graph, start);
     let best_solution = first_solution.swap(graph, start);
     best_solution

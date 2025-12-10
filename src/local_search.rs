@@ -1,15 +1,13 @@
-use crate::graphs::Graph;
+use crate::graphs::MatrixGraph;
 
-#[allow(dead_code)]
 pub trait LocalSearch {
-    fn swap(&self, graph: &Graph, start: usize) -> Self;
-    fn two_opt(&self, graph: &Graph) -> Self;
-    fn shift(&self, graph: &Graph, start: usize) -> Self;
-    fn or_opt(&self, graph: &Graph) -> Self;
+    fn swap(&self, graph: &MatrixGraph, start: usize) -> Self;
+    fn two_opt(&self, graph: &MatrixGraph) -> Self;
+    fn shift(&self, graph: &MatrixGraph, start: usize) -> Self;
+    fn or_opt(&self, graph: &MatrixGraph) -> Self;
 }
 
 #[derive(PartialEq, Clone)]
-#[allow(dead_code)]
 pub struct Solution {
     pub route: Vec<usize>,
     pub cost: f64,
@@ -17,7 +15,7 @@ pub struct Solution {
 
 #[allow(dead_code)]
 impl Solution {
-    pub fn calculate_cost(route: &[usize], graph: &Graph) -> f64 {
+    pub fn calculate_cost(route: &[usize], graph: &MatrixGraph) -> f64 {
         if route.is_empty() {
             return 0.0;
         }
@@ -26,7 +24,7 @@ impl Solution {
             + graph[route[route.len() - 1]][route[0]]
     }
 
-    fn neighbourhood_by_swap(&self, graph: &Graph, start: usize) -> Vec<Self> {
+    fn neighbourhood_by_swap(&self, graph: &MatrixGraph, start: usize) -> Vec<Self> {
         let mut solutions: Vec<Solution> = Vec::new();
 
         for v in &self.route {
@@ -47,7 +45,7 @@ impl Solution {
         solutions
     }
 
-    fn neighbourhood_by_shift(&self, graph: &Graph, start: usize) -> Vec<Self> {
+    fn neighbourhood_by_shift(&self, graph: &MatrixGraph, start: usize) -> Vec<Self> {
         let mut solutions: Vec<Solution> = Vec::new();
         let n = self.route.len();
 
@@ -75,7 +73,7 @@ impl Solution {
         solutions
     }
 
-    fn neighbourhood_by_or_opt(&self, graph: &Graph) -> Vec<Self> {
+    fn neighbourhood_by_or_opt(&self, graph: &MatrixGraph) -> Vec<Self> {
         let n = self.route.len();
         let mut neighbours = Vec::new();
 
@@ -114,7 +112,7 @@ impl Solution {
 }
 
 impl LocalSearch for Solution {
-    fn swap(&self, graph: &Graph, start: usize) -> Self {
+    fn swap(&self, graph: &MatrixGraph, start: usize) -> Self {
         let mut best_solution: Solution = self.clone();
         let mut found_better_solution = true;
 
@@ -139,11 +137,11 @@ impl LocalSearch for Solution {
         best_solution
     }
 
-    fn two_opt(&self, _graph: &Graph) -> Self {
+    fn two_opt(&self, _graph: &MatrixGraph) -> Self {
         self.clone()
     }
 
-    fn shift(&self, graph: &Graph, start: usize) -> Self {
+    fn shift(&self, graph: &MatrixGraph, start: usize) -> Self {
         let mut best_solution: Solution = self.clone();
         let mut found_better_solution = true;
 
@@ -168,7 +166,7 @@ impl LocalSearch for Solution {
         best_solution
     }
 
-    fn or_opt(&self, graph: &Graph) -> Self {
+    fn or_opt(&self, graph: &MatrixGraph) -> Self {
         let mut best_solution: Solution = self.clone();
         let mut found_better_solution = true;
 
