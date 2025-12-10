@@ -38,7 +38,7 @@ pub fn graph_from_csv(item: TokenStream) -> TokenStream {
         data.push(Vec::new());
         for record in line.unwrap().split(',').skip(1) {
             if let Some(l) = data.last_mut() {
-                l.push(record.trim_matches('"').parse().unwrap_or(0.))
+                l.push(record.parse().unwrap_or(0.))
             }
         }
     }

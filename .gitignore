@@ -22,3 +22,7 @@ target/
 *.lof
 *.lol
 _minted/
+
+# R
+.RData
+.Rhistory
