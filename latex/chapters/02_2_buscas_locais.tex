@@ -1,1 +1,143 @@
 \subsection*{Buscas Locais}
+
+Heurísticas de melhoramento local são métodos de otimização que buscam 
+aprimorar uma solução inicial através de pequenas modificações iterativas.
+Essas técnicas são amplamente utilizadas em problemas combinatórios, 
+como o Problema do Caixeiro Viajante (PCV), onde o objetivo é encontrar
+a rota mais curta que visita um conjunto de cidades exatamente uma vez e 
+retorna à cidade de origem.
+
+A ideia principal das buscas locais é iterar através de soluções candidatas,
+movendo-se para soluções vizinhas que apresentam uma melhoria em relação à
+solução atual. Esse processo continua até que nenhuma melhoria adicional possa ser encontrada.
+As etapas gerais de uma busca local incluem:
+\begin{itemize}
+    \item \textbf{Definição da Solução Inicial:} Uma solução inicial é gerada, geralmente por meio de uma heurística construtiva.
+    \item \textbf{Geração de Vizinhança:} A vizinhança da solução atual é definida, o que envolve identificar todas as soluções que podem ser alcançadas através de pequenas modificações.
+    \item \textbf{Avaliação das Soluções Vizinhas:} Cada solução na vizinhança é avaliada com base em um critério de qualidade (fitness).
+    \item \textbf{Movimento para a Melhor Solução Vizinhança:} Se uma solução vizinha melhor for encontrada, a busca se move para essa solução e o processo se repete.
+    \item \textbf{Critério de Parada:} A busca termina quando nenhuma melhoria adicional pode ser encontrada ou quando um critério de parada predefinido é atingido (como um número máximo de iterações).
+\end{itemize}
+
+Neste trabalho, implementamos quatro heurísticas de melhoramento local:
+swap, shift, 2-opt e Or-opt. Cada uma dessas heurísticas opera de
+maneira distinta para explorar o espaço de soluções e melhorar a qualidade 
+da solução inicial gerada pelas heurísticas construtivas 
+(Vizinho Mais Próximo e Inserção Mais Próxima). A implementação define um trait genérico 
+\text{LocalSearch}, que abstrai as operações comuns entre as diferentes heurísticas de busca 
+local.
+
+O trait \text{LocalSearch} define a interface das buscas locais. Cada função dentro do trait 
+recebe a solução atual, o grafo do problema e possíveis parâmetros adicionais, retornando uma
+nova solução melhorada.
+
+\begin{minted}{rust}
+pub trait LocalSearch<Graph> {
+    fn swap(&self, graph: &Graph, start: usize) -> Self;
+    fn two_opt(&self, graph: &Graph) -> Self;
+    fn shift(&self, graph: &Graph, start: usize) -> Self;
+    fn or_opt(&self, graph: &Graph) -> Self;
+}
+\end{minted}
+
+Cada uma das funções do trait opera sobre a solução corrente invocando, 
+dentro da estrutura \texttt{Solution}, um método responsável por gerar a vizinhança 
+correspondente ao tipo de busca local. Assim, a função \texttt{swap} utiliza 
+\texttt{neighbourhood\_by\_swap}, \texttt{shift} invoca \texttt{neighbourhood\_by\_shift}, 
+\texttt{two\_opt} utiliza \texttt{neighbourhood\_by\_two\_opt}, e \texttt{or\_opt} utiliza 
+\texttt{neighbourhood\_by\_or\_opt}. A partir desse conjunto de soluções vizinhas, o método
+seleciona a melhor candidata conforme o critério de custo, substituindo a solução atual 
+quando uma melhoria é identificada. No que diz respeito à estratégia de seleção, 
+as heurísticas \texttt{swap}, \texttt{shift} e \texttt{Or-opt} são implementadas no 
+estilo \textit{best improvement}, avaliando todas as soluções vizinhas antes de escolher a
+melhor. Já a heurística \texttt{2-opt} segue a estratégia \textit{first improvement}, 
+atualizando a solução assim que encontra a primeira melhoria válida, o que reduz o tempo de
+busca, embora possa resultar em ótimos locais de menor qualidade quando comparado ao 
+método de melhor melhoria.
+
+\subsubsection{Swap} 
+\paragraph{Heurística Swap.}
+A heurística \textit{swap} consiste em gerar uma vizinhança a partir da solução atual por 
+meio da troca entre a cidade localizada em uma posição fixa da rota e cada uma das demais 
+posições possíveis. Para cada troca realizada, uma solução candidata é produzida e avaliada 
+com base no seu custo total. O método percorre todas as soluções vizinhas geradas pela função 
+\texttt{neighbourhood\_by\_swap} e seleciona aquela que apresenta o menor custo. 
+Caso esta solução seja melhor do que a solução corrente, a rota é atualizada e o processo 
+é repetido, caracterizando um procedimento iterativo de melhoria contínua. A busca termina 
+quando nenhuma troca adicional resulta em redução do custo, configurando um processo 
+com estratégia de \textit{best improvement}, no qual 
+a melhor solução vizinha é sempre escolhida como próximo passo de exploração.
+
+\begin{minted}{rust}
+fn swap(&self, graph: &[[f64; N]; N], start: usize) -> Self {
+    let mut best_solution: Solution<N> = self.clone();     // solução atual (melhor até agora)
+    let mut found_better_solution = true;                  // controla se ainda há melhorias
+
+    while found_better_solution {                          // repete até não achar vizinho melhor
+        found_better_solution = false;
+
+        let solutions = best_solution
+            .neighbourhood_by_swap(graph, start);          // gera todas as soluções vizinhas via swap
+
+        let mut tmp_solution = best_solution.clone();      // armazena o melhor vizinho da iteração
+
+        for s in solutions.iter() {                        // percorre todos os vizinhos gerados
+            if s.cost < tmp_solution.cost {                // se achar um vizinho melhor...
+                tmp_solution = s.clone();                  // ...atualiza melhor vizinho
+            }
+        }
+
+        if tmp_solution.cost < best_solution.cost {        // se o melhor vizinho é melhor que a atual
+            best_solution = tmp_solution;                  // atualiza a melhor solução
+            found_better_solution = true;                  // marca que houve melhoria → continua o loop
+        }
+    }
+
+    best_solution                                          // retorna a solução final (ótimo local)
+}
+
+\end{minted}
+
+\subsubsection{Or-opt}
+\paragraph{Heurística Or-opt.}
+A heurística \textit{Or-opt} busca melhorar a solução atual por meio do deslocamento de 
+subsequências contíguas da rota, normalmente de tamanho 1, 2 ou 3, para outras posições do 
+percurso. Essa operação permite explorar movimentos mais amplos do que simples trocas ou 
+deslocamentos unitários, oferecendo maior flexibilidade para escapar de ótimos locais 
+superficiais. A função \texttt{neighbourhood\_by\_or\_opt} gera todas as soluções vizinhas 
+possíveis ao remover um bloco da rota e reinseri-lo em outra posição válida. Cada vizinho é 
+avaliado com base no custo total, e a melhor solução encontrada é comparada com a solução 
+atual. Caso represente uma melhoria, a solução corrente é atualizada e o processo é repetido. 
+Assim como em \textit{swap} e \textit{shift}, essa heurística opera segundo a estratégia de 
+\textit{best improvement}, avaliando todas as alternativas da vizinhança antes de escolher a
+melhor. A busca finaliza quando nenhuma realocação adicional de subsequências resulta em
+redução do custo, atingindo um ótimo local sob essa vizinhança.
+
+\begin{minted}{rust}
+fn or_opt(&self, graph: &[[f64; N]; N]) -> Self {
+    let mut best_solution: Solution<N> = self.clone();     // solução atual (referência global)
+    let mut found_better_solution = true;                  // controla se há melhorias sucessivas
+
+    while found_better_solution {                          // repetição até nenhuma melhoria ocorrer
+        found_better_solution = false;
+
+        let solutions = best_solution
+            .neighbourhood_by_or_opt(graph);               // gera vizinhança via movimentação de blocos
+
+        let mut tmp_solution = best_solution.clone();      // melhor solução vizinha da iteração
+
+        for s in solutions.iter() {                        // percorre todas as soluções vizinhas
+            if s.cost < tmp_solution.cost {                // verifica se alguma é melhor que a atual
+                tmp_solution = s.clone();                  // atualiza melhor vizinho
+            }
+        }
+
+        if tmp_solution.cost < best_solution.cost {        // se a melhor vizinha melhora a solução...
+            best_solution = tmp_solution;                  // ...atualiza solução global
+            found_better_solution = true;                  // sinaliza que houve melhoria → continua
+        }
+    }
+
+    best_solution                                          // retorna a solução final (ótimo local)
+}
+\end{minted}
