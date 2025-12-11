@@ -14,7 +14,7 @@ for i in $(seq $(nproc)); do
     TEMP_RESULT=$TEMP_DIR/result_$i.txt
     while [ $(date +%s) -lt $END_TIME ]; do
         # TODO: change this to the desired bin depending on the algorithm
-        ./target/release/graphs-algorithms $PARAMS >> $TEMP_RESULT
+        ./target/release/memetic $PARAMS >> $TEMP_RESULT
     done &
 done
 
