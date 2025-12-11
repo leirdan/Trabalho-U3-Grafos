@@ -7,5 +7,15 @@
 
 # Empty lines and comments are ignored.
 
-# ../data/grasp-km/data.csv
-../data/grasp-min/data.csv
+data/001/data.csv
+# data/002/data.csv
+# data/003/data.csv
+# data/004/data.csv
+# data/005/data.csv
+# data/006/data.csv
+# data/007/data.csv
+# data/008/data.csv
+# data/009/data.csv
+# data/010/data.csv
+# data/011/data.csv
+# data/012/data.csv

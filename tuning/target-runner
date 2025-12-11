@@ -34,8 +34,11 @@ shift 4 || error "Not enough parameters"
 CONFIG_PARAMS=$*
 # End of parsing
 
-EXE=../target/release/graphs-algorithms
+EXE=../target/release/memetic
 EXE_PARAMS="${CONFIG_PARAMS}"
+
+sed -i "s|\(graph_from_csv!(\"\)[^\"]*\(\")\)|\1$INSTANCE\2|" ../src/bin/memetic.rs
+cargo br 2>/dev/null >/dev/null
 
 if [ ! -x "$(command -v ${EXE})" ]; then
     error "${EXE}: not found or not executable (pwd: $(pwd))"
