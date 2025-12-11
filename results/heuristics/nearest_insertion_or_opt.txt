@@ -1,0 +1,12 @@
+instance 1: 2246.3999999999996 
+instance 2: 2223 
+instance 3: 1753.1999999999994 
+instance 4: 1810 
+instance 5: 1352.5 
+instance 6: 1448 
+instance 7: 672.7 
+instance 8: 606 
+instance 9: 438.3 
+instance 10: 364 
+instance 11: 348.29999999999995 
+instance 12: 305 
