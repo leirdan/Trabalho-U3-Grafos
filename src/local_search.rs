@@ -1,7 +1,5 @@
-use crate::graphs::Graph;
-
 #[allow(dead_code)]
-pub trait LocalSearch {
+pub trait LocalSearch<Graph> {
     fn swap(&self, graph: &Graph, start: usize) -> Self;
     fn two_opt(&self, graph: &Graph) -> Self;
     fn shift(&self, graph: &Graph, start: usize) -> Self;
@@ -10,14 +8,14 @@ pub trait LocalSearch {
 
 #[derive(PartialEq, Clone)]
 #[allow(dead_code)]
-pub struct Solution {
+pub struct Solution<const N: usize> {
     pub route: Vec<usize>,
     pub cost: f64,
 }
 
 #[allow(dead_code)]
-impl Solution {
-    pub fn calculate_cost(route: &[usize], graph: &Graph) -> f64 {
+impl<const N: usize> Solution<N> {
+    pub fn calculate_cost(route: &[usize], graph: &[[f64; N]; N]) -> f64 {
         if route.is_empty() {
             return 0.0;
         }
@@ -26,8 +24,8 @@ impl Solution {
             + graph[route[route.len() - 1]][route[0]]
     }
 
-    fn neighbourhood_by_swap(&self, graph: &Graph, start: usize) -> Vec<Self> {
-        let mut solutions: Vec<Solution> = Vec::new();
+    fn neighbourhood_by_swap(&self, graph: &[[f64; N]; N], start: usize) -> Vec<Self> {
+        let mut solutions: Vec<Solution<N>> = Vec::new();
 
         for v in &self.route {
             let mut new_route = self.route.clone();
@@ -47,8 +45,8 @@ impl Solution {
         solutions
     }
 
-    fn neighbourhood_by_shift(&self, graph: &Graph, start: usize) -> Vec<Self> {
-        let mut solutions: Vec<Solution> = Vec::new();
+    fn neighbourhood_by_shift(&self, graph: &[[f64; N]; N], start: usize) -> Vec<Self> {
+        let mut solutions: Vec<Solution<N>> = Vec::new();
         let n = self.route.len();
 
         if start >= n {
@@ -75,7 +73,7 @@ impl Solution {
         solutions
     }
 
-    fn neighbourhood_by_or_opt(&self, graph: &Graph) -> Vec<Self> {
+    fn neighbourhood_by_or_opt(&self, graph: &[[f64; N]; N]) -> Vec<Self> {
         let n = self.route.len();
         let mut neighbours = Vec::new();
 
@@ -113,9 +111,9 @@ impl Solution {
     }
 }
 
-impl LocalSearch for Solution {
-    fn swap(&self, graph: &Graph, start: usize) -> Self {
-        let mut best_solution: Solution = self.clone();
+impl<const N: usize> LocalSearch<[[f64; N]; N]> for Solution<N> {
+    fn swap(&self, graph: &[[f64; N]; N], start: usize) -> Self {
+        let mut best_solution: Solution<N> = self.clone();
         let mut found_better_solution = true;
 
         while found_better_solution {
@@ -139,9 +137,9 @@ impl LocalSearch for Solution {
         best_solution
     }
 
-    fn two_opt(&self, graph: &Graph) -> Self {
+    fn two_opt(&self, graph: &[[f64; N]; N]) -> Self {
         let n = graph.len();
-        let mut current_solution: Solution = self.clone();
+        let mut current_solution: Solution<N> = self.clone();
 
         'outer: for i in 0..(n - 2) {
             for j in i + 2..n {
@@ -167,8 +165,8 @@ impl LocalSearch for Solution {
         current_solution
     }
 
-    fn shift(&self, graph: &Graph, start: usize) -> Self {
-        let mut best_solution: Solution = self.clone();
+    fn shift(&self, graph: &[[f64; N]; N], start: usize) -> Self {
+        let mut best_solution: Solution<N> = self.clone();
         let mut found_better_solution = true;
 
         while found_better_solution {
@@ -192,8 +190,8 @@ impl LocalSearch for Solution {
         best_solution
     }
 
-    fn or_opt(&self, graph: &Graph) -> Self {
-        let mut best_solution: Solution = self.clone();
+    fn or_opt(&self, graph: &[[f64; N]; N]) -> Self {
+        let mut best_solution: Solution<N> = self.clone();
         let mut found_better_solution = true;
 
         while found_better_solution {

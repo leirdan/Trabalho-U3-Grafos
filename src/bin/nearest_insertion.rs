@@ -1,5 +1,7 @@
-use crate::graphs::Graph;
-use crate::local_search::{LocalSearch, Solution};
+use csv_macro::graph_from_csv;
+use graphs_algorithms::local_search::{LocalSearch, Solution};
+
+graph_from_csv!("data/012/data.csv");
 
 /// Implementação da heurística do Vizinho Mais Próximo (Nearest Neighbor), um algoritmo
 /// guloso que gera um caminho para o Problema do Caixeiro Viajante.
@@ -27,7 +29,7 @@ use crate::local_search::{LocalSearch, Solution};
 /// Observação: este algoritmo **não** insere o vértice inicial no fim do caminho,
 /// pois assume-se que há um ciclo hamiltoniano implícito; portanto, adicionar o
 /// vértice inicial novamente não é necessário.
-pub fn nearest_neighbour(graph: &Graph, start: usize) -> Solution {
+fn nearest_neighbour(graph: &Graph, start: usize) -> Solution<NODE_COUNT> {
     let mut visited: Vec<bool> = vec![false; graph.len()];
     let mut path: Vec<usize> = Vec::new();
     path.push(start);
@@ -99,7 +101,7 @@ pub fn nearest_neighbour(graph: &Graph, start: usize) -> Solution {
 /// 8. O processo continua até que todos os vértices estejam presentes no ciclo.
 #[allow(dead_code)]
 // TODO: MUDAR PARA CHEAPEST_INSERTION
-pub fn nearest_insertion(graph: &Graph, start: usize) -> Solution {
+fn nearest_insertion(graph: &Graph, start: usize) -> Solution<NODE_COUNT> {
     let n = graph.len();
     let mut in_cycle = vec![false; n];
     let mut min_dist = vec![f64::INFINITY; n];
@@ -177,126 +179,139 @@ pub fn nearest_insertion(graph: &Graph, start: usize) -> Solution {
 }
 
 #[allow(dead_code)]
-pub fn nearest_neighbour_with_swap(graph: &Graph, start: usize) -> Solution {
+fn nearest_neighbour_with_swap(graph: &Graph, start: usize) -> Solution<NODE_COUNT> {
     let first_solution = nearest_neighbour(graph, start);
     let best_solution = first_solution.swap(graph, start);
     best_solution
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    const INF: f64 = f64::INFINITY;
-
-    #[test]
-    fn nearest_neighbour_1() {
-        let graph = vec![
-            vec![INF, 1.0, 2.0, 4.0, 3.0],
-            vec![1.0, INF, 7.0, 2.0, 5.0],
-            vec![2.0, 7.0, INF, 8.0, 1.0],
-            vec![4.0, 2.0, 8.0, INF, 6.0],
-            vec![3.0, 5.0, 1.0, 6.0, INF],
-        ];
-
-        let solution = nearest_neighbour(&graph, 0);
-
-        assert_eq!(solution.cost, 12.0);
-        assert_eq!(solution.route[0], 0);
-        assert_eq!(solution.route.last(), Some(2).as_ref());
-    }
-
-    #[test]
-    fn nearest_neighbour_2() {
-        let graph = vec![
-            vec![INF, 1.0, 3.0, 6.0],
-            vec![1.0, INF, 2.0, 3.0],
-            vec![3.0, 2.0, INF, 1.0],
-            vec![6.0, 3.0, 1.0, INF],
-        ];
-
-        let solution = nearest_neighbour(&graph, 0);
-
-        assert_eq!(solution.cost, 10.0);
-        assert_eq!(solution.route[0], 0);
-        assert_eq!(solution.route.last(), Some(3).as_ref());
-    }
-
-    #[test]
-    fn test_3() {
-        let graph = vec![
-            vec![INF, 1.0, 3.0, 1000.0],
-            vec![1.0, INF, 2.0, 3.0],
-            vec![3.0, 2.0, INF, 1.0],
-            vec![1000.0, 3.0, 1.0, INF],
-        ];
-
-        let solution = nearest_neighbour(&graph, 0);
-
-        assert_eq!(solution.cost, 1004.0);
-        assert_eq!(solution.route[0], 0);
-        assert_eq!(solution.route.last(), Some(3).as_ref());
-    }
-
-    fn is_valid_cycle(route: &[usize], n: usize) -> bool {
-        if route.len() != n {
-            return false;
-        }
-
-        let mut visited = vec![false; n];
-        for &v in route.iter() {
-            if v >= n || visited[v] {
-                return false;
-            }
-            visited[v] = true;
-        }
-
-        true
-    }
-
-    #[test]
-    fn tsp_1() {
-        let graph = vec![
-            vec![INF, 10.0, 15.0, 20.0],
-            vec![10.0, INF, 35.0, 25.0],
-            vec![15.0, 35.0, INF, 30.0],
-            vec![20.0, 25.0, 30.0, INF],
-        ];
-
-        let solution = nearest_insertion(&graph, 0);
-
-        assert!(is_valid_cycle(&solution.route, graph.len()));
-        assert!(solution.cost > 0.0);
-    }
-
-    #[test]
-    fn tsp_2() {
-        let graph = vec![
-            vec![INF, 2.0, 9.0, 10.0, 7.0],
-            vec![2.0, INF, 6.0, 4.0, 3.0],
-            vec![9.0, 6.0, INF, 8.0, 5.0],
-            vec![10.0, 4.0, 8.0, INF, 6.0],
-            vec![7.0, 3.0, 5.0, 6.0, INF],
-        ];
-
-        let solution = nearest_insertion(&graph, 0);
-
-        assert!(is_valid_cycle(&solution.route, graph.len()));
-        assert!(solution.cost > 0.0);
-    }
-
-    #[test]
-    fn tsp_3() {
-        let graph = vec![
-            vec![INF, 1.0, 50.0, 100.0, 1.0],
-            vec![1.0, INF, 1.0, 50.0, 100.0],
-            vec![50.0, 1.0, INF, 1.0, 50.0],
-            vec![100.0, 50.0, 1.0, INF, 1.0],
-            vec![1.0, 100.0, 50.0, 1.0, INF],
-        ];
-
-        let solution = nearest_insertion(&graph, 0);
-
-        assert!(is_valid_cycle(&solution.route, graph.len()));
-        assert!(solution.cost > 0.0);
-    }
+fn nearest_insertion_with_or_opt(graph: &Graph, start: usize) -> Solution<NODE_COUNT> {
+    let first_solution = nearest_insertion(graph, start);
+    let best_solution = first_solution.or_opt(graph);
+    best_solution
 }
+
+fn main() {
+    // println!("{} ", nearest_neighbour(&g, 0).cost);
+    // println!("{} ", nearest_neighbour_with_swap(&g, 0).cost);
+    // println!("{} ", nearest_insertion(&g, 0).cost);
+    println!("{} ", nearest_insertion_with_or_opt(&g, 0).cost);
+}
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     const INF: f64 = f64::INFINITY;
+//
+//     #[test]
+//     fn nearest_neighbour_1() {
+//         let graph = vec![
+//             vec![INF, 1.0, 2.0, 4.0, 3.0],
+//             vec![1.0, INF, 7.0, 2.0, 5.0],
+//             vec![2.0, 7.0, INF, 8.0, 1.0],
+//             vec![4.0, 2.0, 8.0, INF, 6.0],
+//             vec![3.0, 5.0, 1.0, 6.0, INF],
+//         ];
+//
+//         let solution = nearest_neighbour(&graph, 0);
+//
+//         assert_eq!(solution.cost, 12.0);
+//         assert_eq!(solution.route[0], 0);
+//         assert_eq!(solution.route.last(), Some(2).as_ref());
+//     }
+//
+//     #[test]
+//     fn nearest_neighbour_2() {
+//         let graph = vec![
+//             vec![INF, 1.0, 3.0, 6.0],
+//             vec![1.0, INF, 2.0, 3.0],
+//             vec![3.0, 2.0, INF, 1.0],
+//             vec![6.0, 3.0, 1.0, INF],
+//         ];
+//
+//         let solution = nearest_neighbour(&graph, 0);
+//
+//         assert_eq!(solution.cost, 10.0);
+//         assert_eq!(solution.route[0], 0);
+//         assert_eq!(solution.route.last(), Some(3).as_ref());
+//     }
+//
+//     #[test]
+//     fn test_3() {
+//         let graph = vec![
+//             vec![INF, 1.0, 3.0, 1000.0],
+//             vec![1.0, INF, 2.0, 3.0],
+//             vec![3.0, 2.0, INF, 1.0],
+//             vec![1000.0, 3.0, 1.0, INF],
+//         ];
+//
+//         let solution = nearest_neighbour(&graph, 0);
+//
+//         assert_eq!(solution.cost, 1004.0);
+//         assert_eq!(solution.route[0], 0);
+//         assert_eq!(solution.route.last(), Some(3).as_ref());
+//     }
+//
+//     fn is_valid_cycle(route: &[usize], n: usize) -> bool {
+//         if route.len() != n {
+//             return false;
+//         }
+//
+//         let mut visited = vec![false; n];
+//         for &v in route.iter() {
+//             if v >= n || visited[v] {
+//                 return false;
+//             }
+//             visited[v] = true;
+//         }
+//
+//         true
+//     }
+//
+//     #[test]
+//     fn tsp_1() {
+//         let graph = vec![
+//             vec![INF, 10.0, 15.0, 20.0],
+//             vec![10.0, INF, 35.0, 25.0],
+//             vec![15.0, 35.0, INF, 30.0],
+//             vec![20.0, 25.0, 30.0, INF],
+//         ];
+//
+//         let solution = nearest_insertion(&graph, 0);
+//
+//         assert!(is_valid_cycle(&solution.route, graph.len()));
+//         assert!(solution.cost > 0.0);
+//     }
+//
+//     #[test]
+//     fn tsp_2() {
+//         let graph = vec![
+//             vec![INF, 2.0, 9.0, 10.0, 7.0],
+//             vec![2.0, INF, 6.0, 4.0, 3.0],
+//             vec![9.0, 6.0, INF, 8.0, 5.0],
+//             vec![10.0, 4.0, 8.0, INF, 6.0],
+//             vec![7.0, 3.0, 5.0, 6.0, INF],
+//         ];
+//
+//         let solution = nearest_insertion(&graph, 0);
+//
+//         assert!(is_valid_cycle(&solution.route, graph.len()));
+//         assert!(solution.cost > 0.0);
+//     }
+//
+//     #[test]
+//     fn tsp_3() {
+//         let graph = vec![
+//             vec![INF, 1.0, 50.0, 100.0, 1.0],
+//             vec![1.0, INF, 1.0, 50.0, 100.0],
+//             vec![50.0, 1.0, INF, 1.0, 50.0],
+//             vec![100.0, 50.0, 1.0, INF, 1.0],
+//             vec![1.0, 100.0, 50.0, 1.0, INF],
+//         ];
+//
+//         let solution = nearest_insertion(&graph, 0);
+//
+//         assert!(is_valid_cycle(&solution.route, graph.len()));
+//         assert!(solution.cost > 0.0);
+//     }
+// }
