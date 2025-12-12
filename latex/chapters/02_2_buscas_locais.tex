@@ -20,7 +20,7 @@ As etapas gerais de uma busca local incluem:
 \end{itemize}
 
 Neste trabalho, implementamos quatro heurísticas de melhoramento local:
-swap, shift, 2-opt e Or-opt. Cada uma dessas heurísticas opera de
+Swap, Shift, 2-opt e Or-opt. Cada uma dessas heurísticas opera de
 maneira distinta para explorar o espaço de soluções e melhorar a qualidade 
 da solução inicial gerada pelas heurísticas construtivas 
 (Vizinho Mais Próximo e Inserção Mais Próxima). A implementação define um trait genérico 
@@ -40,24 +40,12 @@ pub trait LocalSearch<Graph> {
 }
 \end{minted}
 
-Cada uma das funções do trait opera sobre a solução corrente invocando, 
-dentro da estrutura \texttt{Solution}, um método responsável por gerar a vizinhança 
-correspondente ao tipo de busca local. Assim, a função \texttt{swap} utiliza 
-\texttt{neighbourhood\_by\_swap}, \texttt{shift} invoca \texttt{neighbourhood\_by\_shift}, 
-\texttt{two\_opt} utiliza \texttt{neighbourhood\_by\_two\_opt}, e \texttt{or\_opt} utiliza 
-\texttt{neighbourhood\_by\_or\_opt}. A partir desse conjunto de soluções vizinhas, o método
-seleciona a melhor candidata conforme o critério de custo, substituindo a solução atual 
-quando uma melhoria é identificada. No que diz respeito à estratégia de seleção, 
-as heurísticas \texttt{swap}, \texttt{shift} e \texttt{Or-opt} são implementadas no 
-estilo \textit{best improvement}, avaliando todas as soluções vizinhas antes de escolher a
-melhor. Já a heurística \texttt{2-opt} segue a estratégia \textit{first improvement}, 
-atualizando a solução assim que encontra a primeira melhoria válida, o que reduz o tempo de
-busca, embora possa resultar em ótimos locais de menor qualidade quando comparado ao 
-método de melhor melhoria.
+Tais funções acima podem ser classificadas de duas formas: \textbf{Best Improvement}, aquelas que otimizam ao máximo o custo do cenário inicial que lhe foi dado, ou \textbf{First Improvement}, que opera somente sobre a primeira oportunidade de otimização de custo encontrada. Ambas tem seus pontos fortes, esta tem um ganho inferior, mas em contrapartida sua complexidade é muito baixa, já essa gera otimizações melhores por conta de sua complexidade elevada.
+
+Mas todas pertencem à categoria de \textbf{Busca Local} por um motivo, elas operam de maneira praticamente idêntica, divergindo apenas na forma em que enxerga e opera sobre sua vizinhança. Dito isso, foram implementadas as heurísticas \texttt{Swap}, \texttt{Shift} e \texttt{Or-opt} da categoria \textbf{Best Improvement} e apenas a \textbf{2-opt} da classe \textbf{First Improvement}. Sendo assim, dada a imensa semelhança entre a implementação das buscas, será dado enfoque na forma no qual estas enxergam sua vizinhança.
 
 \subsubsection{Swap} 
-\paragraph{Heurística Swap.}
-A heurística \textit{swap} consiste em gerar uma vizinhança a partir da solução atual por 
+Consiste em gerar uma vizinhança a partir da solução atual por 
 meio da troca entre a cidade localizada em uma posição fixa da rota e cada uma das demais 
 posições possíveis. Para cada troca realizada, uma solução candidata é produzida e avaliada 
 com base no seu custo total. O método percorre todas as soluções vizinhas geradas pela função 
@@ -99,8 +87,7 @@ fn swap(&self, graph: &[[f64; N]; N], start: usize) -> Self {
 \end{minted}
 
 \subsubsection{Or-opt}
-\paragraph{Heurística Or-opt.}
-A heurística \textit{Or-opt} busca melhorar a solução atual por meio do deslocamento de 
+Tem como objetivo melhorar a solução atual por meio do deslocamento de 
 subsequências contíguas da rota, normalmente de tamanho 1, 2 ou 3, para outras posições do 
 percurso. Essa operação permite explorar movimentos mais amplos do que simples trocas ou 
 deslocamentos unitários, oferecendo maior flexibilidade para escapar de ótimos locais 

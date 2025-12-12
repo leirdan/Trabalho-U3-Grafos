@@ -21,11 +21,7 @@ e um custo associado a essa rota, que é um número de tipo flutuante.
 Uma observação é em relação à este tipo genérico \texttt{N}: ele não representa
 o tipo do nó, pois em nossa implementação escolhemos de forma arbitrária um tipo não-genérico
 para representar os vértices, o \texttt{usize}. Em vez disso, ele é usado para representar de forma
-dinâmica e durante a etapa de compilação o tamanho do grafo, graças à macro \texttt{graph\_from\_csv!}
-que será introduzida na seção sobre o algoritmo genético/memético.
-Basicamente, ele permite que utilizemos fatias (slices) e não somente \texttt{Vec}
-para representar os grafos que temos, tornando nossas operações mais eficientes.
-Agora, vamos voltar à normalidade.
+dinâmica e durante a etapa de compilação o tamanho do grafo, graças à macro \texttt{graph\_from\_csv} cujas particularidades serão abordadas na seção sobre o algoritmo genético/memético.
 
 \subsubsection*{Nearest Neighbour (Vizinho Mais Próximo)}
 A heurística do Nearest Neighbour consiste em um algoritmo guloso para a construção
@@ -95,12 +91,12 @@ composta pela rota e seu custo total.
     \end{minted}
 
 Note que não adicionamos na rota o nó inicial novamente, pois já sabemos que essa rota
-é um ciclo Hamiltoniano, sendo desnecessária essa adição.
+é um Ciclo Hamiltoniano, sendo desnecessária essa adição.
 
 \subsubsection*{Nearest Insertion (Inserção Mais Próxima)}
 A heurística do Nearest Insertion consiste em um algoritmo que busca selecionar o próximo
-nó da rota a partir de todos os vértices que já estão na rota, encontrando o nó de menor custo;
-além disso, ao inserir é levada em consideração também a posição na rota, buscando sempre
+nó da rota a partir de todos os vértices que já estão na rota, encontrando o nó de menor custo.
+Além disso, ao inserir é levada em consideração também a posição na rota, buscando sempre
 inserir onde minimizará o custo total dela.
 
 A fase inicial do algoritmo consiste na inicialização de um vetor para marcar se um vértice já
@@ -188,7 +184,7 @@ de vértices qual local terá a menor distância de \texttt{u} até \texttt{r} e
 
 Por fim, calculamos o custo da rota que foi gerada e retornamos a solução. Note que removemos o
 vértice ao fim do ciclo pois é justamente o vértice inicial, uma informação redundante pois, como
-comentado anteriormente, sabemos que a rota gerada é um ciclo Hamiltoniano.
+comentado anteriormente, sabemos que a rota gerada é um Ciclo Hamiltoniano.
 
 \begin{minted}{rust}
     cycle.pop();
