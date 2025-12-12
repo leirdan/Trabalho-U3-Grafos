@@ -1,9 +1,197 @@
 \subsection*{Heurísticas}
-As heurísticas são algoritmos úteis para encontrar soluções boas em problemas de larga escala,
+As heurísticas são algoritmos úteis para encontrar soluções
+boas em problemas de larga escala,
 cujos algoritmos tradicionais levariam muito tempo.
-Neste trabalho, focamos nossa implementação em duas heurísticas: Nearest Neighbour e Nearest Insertion.
+Neste trabalho, focamos nossa implementação em duas heurísticas para
+o Problema do Caixeiro Viajante: Nearest Neighbour e Nearest Insertion.
+
+Para representar as soluções encontradas em cada heurística e nas buscas locais,
+criamos a seguinte estrutura:
+\begin{minted}{rust}
+#[derive(PartialEq, Clone)]
+pub struct Solution<const N: usize> {
+    pub route: Vec<usize>,
+    pub cost: f64,
+}
+\end{minted}
+
+Essa estrutura possui dois campos: um vetor de naturais que representa a rota formada pelos vértices
+e um custo associado a essa rota, que é um número de tipo flutuante.
+
+Uma observação é em relação à este tipo genérico \texttt{N}: ele não representa
+o tipo do nó, pois em nossa implementação escolhemos de forma arbitrária um tipo não-genérico
+para representar os vértices, o \texttt{usize}. Em vez disso, ele é usado para representar de forma
+dinâmica e durante a etapa de compilação o tamanho do grafo, graças à macro \texttt{graph\_from\_csv!}
+que será introduzida na seção sobre o algoritmo genético/memético.
+Basicamente, ele permite que utilizemos fatias (slices) e não somente \texttt{Vec}
+para representar os grafos que temos, tornando nossas operações mais eficientes.
+Agora, vamos voltar à normalidade.
 
 \subsubsection*{Nearest Neighbour (Vizinho Mais Próximo)}
-A heurística do Nearest Neighbour consiste em um algoritmo guloso que,
-dado um nó arbitrário, sempre escolhe a aresta
-de menor custo até o próximo vizinho sem se importar com as consequências futuras.
+A heurística do Nearest Neighbour consiste em um algoritmo guloso para a construção
+de uma rota otimizada, cujo critério de seleção do próximo nó consiste em escolher a aresta
+de menor custo até o próximo vizinho, sem se importar com as consequências futuras.
+
+A fase inicial do algortimo consiste na inicialização de um vetor que armazena todos os
+vértices já visitados e um vetor para a rota final, como mostrado abaixo.
+O vetor de visitados difere do vetor de caminho na sua inicialização:
+como iremos verificar constantemente quais vizinhos já foram visitados, uma operação como
+\texttt{.contains()} tem complexidade O(n), então iniciar um vetor com todas as posições
+já demarcadas e depois visitar com um simples \texttt{visited[i]} tem complexidade O(1),
+sendo um pouco mais eficiente. Outra otimização foi o uso da variável \texttt{visited\_count},
+que evita precisarmos percorrer todo o vetor de visitados para contar.
+
+\begin{minted}{rust}
+    // Armazena para cada nó a informação se ele já foi visitado
+    let mut visited: Vec<bool> = vec![false; graph.len()];
+    // Guarda o caminho formado ao longo da execução do algoritmo.
+    let mut path: Vec<usize> = Vec::new();
+    path.push(start);
+    // Armazena quantos nós foram visitados.
+    let mut visited_count = 1;
+    // Variáveis auxiliares durante o decorrer das iterações.
+    let mut cost: f64 = 0.0;
+    let mut current_node = start;
+    visited[current_node] = true;
+    let mut better_cost;
+    let mut next_on_path: Option<usize> = None;
+\end{minted}
+
+Em seguida, iniciamos o loop principal, que executará enquanto o caminho não tiver sido
+completamente preenchido. Neste loop, selecionamos, dentre todos os vizinhos do nó inicial,
+o vizinho mais próximo (com menor custo) com base no melhor custo calculado até o momento e
+adicionamos à rota, repetindo o processo até que toda a rota tenha sido preenchida.
+Quando a rota está completa, calculamos o custo do nó final ao inicial e retornamos uma solução
+composta pela rota e seu custo total.
+\begin{minted}{rust}
+    // Loop de construção da rota
+    while visited_count != graph.len() {
+        better_cost = f64::INFINITY;
+        // Loop que busca o vizinho mais próximo (de menor custo) do nó atual.
+        for (i, val) in visited.iter().enumerate() {
+            if *val || current_node == i {
+                continue;
+            }
+            if graph[current_node][i] < better_cost {
+                better_cost = graph[current_node][i];
+                next_on_path = Some(i);
+            }
+        }
+        // Selecionado o vizinho mais próximo, adiciona na rota, adiciona no custo total,la
+        // marca como visitado e define ele como o nó atual, executando novamente o loop.
+        if let Some(next_on_path) = next_on_path {
+            let n = next_on_path;
+            path.push(n);
+            cost += better_cost;
+            current_node = n;
+            visited[n] = true;
+            visited_count += 1;
+        }
+    }
+    // Calculamos no custo total a aresta que vai do nó final ao inicial,
+    // formando um ciclo Hamiltoniano
+    cost += graph[current_node][start];
+    Solution { route: path, cost }
+    \end{minted}
+
+Note que não adicionamos na rota o nó inicial novamente, pois já sabemos que essa rota
+é um ciclo Hamiltoniano, sendo desnecessária essa adição.
+
+\subsubsection*{Nearest Insertion (Inserção Mais Próxima)}
+A heurística do Nearest Insertion consiste em um algoritmo que busca selecionar o próximo
+nó da rota a partir de todos os vértices que já estão na rota, encontrando o nó de menor custo;
+além disso, ao inserir é levada em consideração também a posição na rota, buscando sempre
+inserir onde minimizará o custo total dela.
+
+A fase inicial do algoritmo consiste na inicialização de um vetor para marcar se um vértice já
+está na rota, um vetor que marca a distância até cada nó e outras variáveis auxiliares.
+Seguimos uma lógica análoga na criação das variáveis ao Nearest Neighbour, buscando uma certa eficiência.
+\begin{minted}{rust}
+    let n = graph.len();
+    let mut in_cycle = vec![false; n];
+    let mut min_dist = vec![f64::INFINITY; n];
+    in_cycle[start] = true; // Marca o primeiro nó como pertencente ao ciclo.
+    let mut first: Option<usize> = None;
+    let mut best = f64::INFINITY;
+    // Escolhe o melhor nó no grafo para ser inserido, de acordo com o menor custo
+    // do inicial até ele.
+    for (i, row) in graph.iter().enumerate().take(n) {
+        if i != start && row[start] < best {
+            best = row[start];
+            first = Some(i);
+        }
+    }
+    let first = first.expect("Invalid graph: no vertex found to start the cycle");
+    in_cycle[first] = true;
+    // Cria um ciclo Hamiltoniano com o inicial e o melhor nó
+    let mut cycle = vec![start, first, start];
+    // Calcula a distância até os demais vértices que ainda não estão na rota
+    for v in 0..n {
+        if !in_cycle[v] {
+            min_dist[v] = graph[v][start].min(graph[v][first]);
+        }
+    }
+\end{minted}
+
+Na seção seguinte, é iniciado o loop principal para selecionar e adicionar os nós na rota enquanto ela
+não estiver completa.
+Neste loop, faremos a escolha do menor nó alcançável a partir de qualquer um dos
+vértices que já está no ciclo. Após isso, faremos a escolha de qual posição na rota atual será utilizada
+para inserir o nó que foi encontrado anteriormente. Tal procedimento é feito calculando para todos os pares
+de vértices qual local terá a menor distância de \texttt{u} até \texttt{r} e \texttt{r} até \texttt{v}.
+
+\begin{minted}{rust}
+    let mut count_in_cycle = 2;
+    while count_in_cycle < n {
+        let mut r_star: Option<usize> = None;
+        let mut best_dist = f64::INFINITY;
+        // Seleciona o menor vértice alcançável a partir do ciclo.
+        for v in 0..n {
+            if !in_cycle[v] && min_dist[v] < best_dist {
+                best_dist = min_dist[v];
+                r_star = Some(v);
+            }
+        }
+        let r_star = r_star.expect("No candidate vertex found");
+        let mut best_extra = f64::INFINITY;
+        let mut best_pos = 0;
+        // Para todos os nós do ciclo, calcula a posição que deverá ser inserido o
+        // vértice, baseado no menor impacto possível no custo
+        for i in 0..cycle.len() - 1 {
+            let u = cycle[i];
+            let v = cycle[i + 1];
+            let du = graph[u][r_star];
+            let dv = graph[r_star][v];
+            let uv = graph[u][v];
+            let extra = du + dv - uv;
+            if extra < best_extra {
+                best_extra = extra;
+                best_pos = i;
+            }
+        }
+        // Insere o menor vértice na melhor posição encontrada e o marca como
+        // pertencente ao ciclo.
+        cycle.insert(best_pos + 1, r_star);
+        in_cycle[r_star] = true;
+        count_in_cycle += 1;
+        // Atualiza as distâncias conhecidas.
+        for v in 0..n {
+            if !in_cycle[v] {
+                let d = graph[v][r_star];
+                if d < min_dist[v] {
+                    min_dist[v] = d;
+                }
+            }
+        }
+    }
+    \end{minted}
+
+Por fim, calculamos o custo da rota que foi gerada e retornamos a solução. Note que removemos o
+vértice ao fim do ciclo pois é justamente o vértice inicial, uma informação redundante pois, como
+comentado anteriormente, sabemos que a rota gerada é um ciclo Hamiltoniano.
+
+\begin{minted}{rust}
+    cycle.pop();
+    let cost = Solution::calculate_cost(&cycle, graph);
+    Solution { route: cycle, cost }
+\end{minted}
