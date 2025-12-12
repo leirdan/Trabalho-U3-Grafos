@@ -5,7 +5,7 @@ para o algoritmo genético e para o algoritmo memético. Optamos por
 concentrar em um único capítulo dada à sua estreita ligação.
 
 Quanto ao algoritmo genético, como uma implementação
-tradicional já entendida, vamos apenas nos ater as principais
+tradicional já é entendida, vamos apenas nos ater as principais
 decisões que tomamos quanto a implementação do nosso algoritmo para o
 problema. Tais decisões são dividas em 5 pontos principais:
 
@@ -124,4 +124,129 @@ for n in offspring.iter_mut().skip(1) {
 \end{minted}
 
 Quanto aos hiper-parâmetros, simplemesmente realizamos o tuning do
-irace para as instâncias que tinhamos.
+irace\cite{irace} para as instâncias que tinhamos. Para as instâncias de tempo
+e distância foram usados os seguintes parâmetros respectivamente:
+
+\begin{center}
+  \begin{tabular}{|c|c|c|c|}
+    \hline
+    Tipo & Número de iterações & Tamanho da população & Taxa de mutação \\
+    \hline
+    Tempo (min)    & 2452 & 197 & 0.0193 \\
+    Distância (km) & 677  & 195 & 0.0152 \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Algoritmo memético}
+
+Quanto ao algoritmo memético, a principal diferença é a existência da
+busca local na fase de mutação. Esta se dá da seguinte forma:
+
+\begin{minted}{rust}
+// Mesma lógica de seleção.
+let (h1, h2) = p.split_at_mut(p.len() / 2);
+for (p1, p2) in h1.iter_mut().zip(h2) {
+    if let Some(i) = cross(p1, p2)
+        && rand::random_bool(mrate)
+    {
+        // Offspring que substitui um dos pais.
+        let offspring = &mut [p1, p2][i];
+        let s = {
+            mutate(offspring);
+            // Desta vez é chamado um construtor de Solution.
+            individual_to_solution(offspring)
+        };
+        // Usamos a instância de Solution para realizar a busca local escolhida aleatóriamente.
+        let s = match rand::random_range(1..=100) {
+            1..25 => s.shift(&g, s.route[0]),
+            25..50 => s.swap(&g, s.route[0]),
+            50..75 => s.two_opt(&g),
+            _ => s.or_opt(&g),
+        };
+        // Offspring se torna a versão modificada de s.
+        offspring.copy_from_slice(&s.route);
+    }
+}
+// Mesma lógica de embaralhamento.
+p.shuffle(rng);
+\end{minted}
+
+\subsection{Resultados}
+
+Realizamos os testes do genético e do memético em duas máquinas
+diferentes, o genético numa com um Ryzen 9 5900X e o memético
+num Intel Core i7 Ultra 155H.
+
+Estes são os resultados do algoritmo genético:
+
+% tex-fmt: off
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Instância & Mínimo & $\mu_{custo}$ & $\sigma_{custo}$ & $\mu_{tempo}$ & $\sigma_{tempo}$ & Execuções \\
+\hline
+1  & 1952.10 & 2042.73 & 25.97 & 0.16 & 0.01 & 11727.00 \\
+2  & 1996.00 & 2052.01 & 17.17 & 0.54 & 0.03 & 3497.00 \\
+3  & 1708.00 & 1777.23 & 21.29 & 0.09 & 0.01 & 20939.00 \\
+4  & 1663.00 & 1697.99 & 13.58 & 0.31 & 0.02 & 5996.00 \\
+5  & 1321.00 & 1346.34 & 10.26 & 0.04 & 0.00 & 41693.00 \\
+6  & 1223.00 & 1240.54 & 10.32 & 0.16 & 0.01 & 11950.00 \\
+7  & 672.70  & 673.08  & 2.29  & 0.02 & 0.00 & 101487.00 \\
+8  & 606.00  & 606.18  & 0.75  & 0.06 & 0.01 & 30650.00 \\
+9  & 438.30  & 438.30  & 0.15  & 0.01 & 0.00 & 169785.00 \\
+10 & 364.00  & 364.00  & 0.08  & 0.03 & 0.00 & 55279.00 \\
+11 & 344.90  & 344.90  & 0.00  & 0.01 & 0.00 & 192837.00 \\
+12 & 305.00  & 305.00  & 0.00  & 0.03 & 0.00 & 64604.00 \\
+\hline
+\end{tabular}
+\end{center}
+% tex-fmt: on
+
+Estes são os resultados do algoritmo memético:
+
+% tex-fmt: off
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Instância & Mínimo & $\mu_{custo}$ & $\sigma_{custo}$ & $\mu_{tempo}$ & $\sigma_{tempo}$ & Execuções \\
+\hline
+1  & 1942.30 & 1960.57 & 21.64 & 1.49 & 0.52 & 731.00 \\
+2  & 1973.00 & 1994.96 & 12.19 & 1.40 & 0.45 & 771.00 \\
+3  & 1695.00 & 1701.51 & 10.25 & 0.68 & 0.20 & 1583.00 \\
+4  & 1662.00 & 1669.38 & 7.37  & 0.60 & 0.18 & 1761.00 \\
+5  & 1321.00 & 1324.63 & 6.48  & 0.22 & 0.04 & 4845.00 \\
+6  & 1223.00 & 1225.33 & 4.72  & 0.22 & 0.04 & 4797.00 \\
+7  & 672.70  & 672.72  & 0.57  & 0.06 & 0.01 & 17421.00 \\
+8  & 606.00  & 606.01  & 0.16  & 0.06 & 0.01 & 16273.00 \\
+9  & 438.30  & 438.30  & 0.07  & 0.03 & 0.01 & 29911.00 \\
+10 & 364.00  & 364.00  & 0.00  & 0.03 & 0.01 & 29202.00 \\
+11 & 344.90  & 344.90  & 0.00  & 0.03 & 0.01 & 31797.00 \\
+12 & 305.00  & 305.00  & 0.00  & 0.03 & 0.01 & 30212.00 \\
+\hline
+\end{tabular}
+\end{center}
+% tex-fmt: on
+
+Um sumário dos resultados dos dois
+
+\begin{center}
+  \begin{tabular}{|c|c|c|}
+    \hline
+    Instância & Min. Genético & Min. Memético \\
+    \hline
+    1  & 1952.10 & 1942.30 \\
+    2  & 1996.00 & 1973.00 \\
+    3  & 1708.00 & 1695.00 \\
+    4  & 1663.00 & 1662.00 \\
+    5  & 1321.00 & 1321.00 \\
+    6  & 1223.00 & 1223.00 \\
+    7  & 672.70  & 672.70  \\
+    8  & 606.00  & 606.00  \\
+    9  & 438.30  & 438.30  \\
+    10 & 364.00  & 364.00  \\
+    11 & 344.90  & 344.90  \\
+    12 & 305.00  & 305.00  \\
+    \hline
+  \end{tabular}
+\end{center}
