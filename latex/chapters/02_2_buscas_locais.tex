@@ -68,76 +68,67 @@ quando nenhuma troca adicional resulta em redução do custo, configurando um pr
 com estratégia de \textit{best improvement}, no qual 
 a melhor solução vizinha é sempre escolhida como próximo passo de exploração.
 
+\noindent\textbf{Observação:} Outras heurísticas implementadas que seguem a mesma abordagem
+(\textit{best improvement}) ao varrer toda a vizinhança antes de aceitar uma mudança são
+a heurística \textit{shift} (usando \texttt{neighbourhood\_by\_shift}) e a heurística
+\textit{Or-opt} (usando \texttt{neighbourhood\_by\_or\_opt}).
+
 \begin{minted}{rust}
-fn swap(&self, graph: &[[f64; N]; N], start: usize) -> Self {
-    let mut best_solution: Solution<N> = self.clone();     // solução atual (melhor até agora)
-    let mut found_better_solution = true;                  // controla se ainda há melhorias
+fn neighbourhood_by_swap(&self, graph: &[[f64; N]; N], start: usize) -> Vec<Self> {
+    let mut solutions: Vec<Solution<N>> = Vec::new();
+    let n = self.route.len();
+    if start >= n { return solutions; }
 
-    while found_better_solution {                          // repete até não achar vizinho melhor
-        found_better_solution = false;
+    // para cada posição diferente de `start`, troca as posições e calcula custo
+    for i in 0..n {
+        if i == start { continue; }
+        let mut new_route = self.route.clone();
+        new_route.swap(start, i); // troca os índices start e i
 
-        let solutions = best_solution
-            .neighbourhood_by_swap(graph, start);          // gera todas as soluções vizinhas via swap
+        let cost = Self::calculate_cost(&new_route, graph);
+        solutions.push(Self { route: new_route, cost });
+    }
 
-        let mut tmp_solution = best_solution.clone();      // armazena o melhor vizinho da iteração
+    solutions
+}
+\end{minted}
 
-        for s in solutions.iter() {                        // percorre todos os vizinhos gerados
-            if s.cost < tmp_solution.cost {                // se achar um vizinho melhor...
-                tmp_solution = s.clone();                  // ...atualiza melhor vizinho
+\subsubsection{2-opt}
+\paragraph{Heurística 2‑opt.}
+A heurística 2‑opt opera removendo duas arestas do ciclo e reconectando os caminhos de forma
+a reverter a ordem dos vértices entre os cortes. Esse operador tende a eliminar cruzamentos
+na rota e promove mudanças estruturais mais significativas que uma simples troca de posições.
+Ao contrário de \textit{swap}, \textit{shift} e \textit{Or-opt} (implementadas aqui com
+estratégia de \textit{best improvement}), a implementação de 2‑opt neste trabalho usa a
+estratégia de \textit{first improvement}: assim que é encontrada a primeira reversão que
+reduz o custo, a solução é atualizada e a busca recomeça a partir da nova solução, isso
+reduz o custo computacional por iteração, embora possa convergir para ótimos locais de
+qualidade inferior ao método de melhor melhoria.
+
+A vizinhança 2‑opt é gerada por \texttt{neighbourhood\_by\_two\_opt}, que itera todos os
+pares \((i,j)\) com \(i<j\) e constrói a rota resultante da inversão do subtrecho entre
+esses índices (implementação padrão: reverter o trecho \((i+1)..=j\)). Exemplo:
+
+\begin{minted}{rust}
+fn neighbourhood_by_two_opt(&self, graph: &[[f64; N]; N]) -> Vec<Self> {
+    let mut neighbours: Vec<Solution<N>> = Vec::new();
+    let n = self.route.len();
+    if n < 2 { return neighbours; }
+
+    for i in 0..(n - 1) {
+        for j in (i + 1)..n {
+            let mut new_route = self.route.clone();
+            // 2‑opt padrão: reverter a parte interna entre i+1 e j
+            if i + 1 <= j {
+                new_route[(i + 1)..=j].reverse();
             }
-        }
 
-        if tmp_solution.cost < best_solution.cost {        // se o melhor vizinho é melhor que a atual
-            best_solution = tmp_solution;                  // atualiza a melhor solução
-            found_better_solution = true;                  // marca que houve melhoria → continua o loop
+            let cost = Self::calculate_cost(&new_route, graph);
+            neighbours.push(Solution { route: new_route, cost });
         }
     }
 
-    best_solution                                          // retorna a solução final (ótimo local)
-}
-
-\end{minted}
-
-\subsubsection{Or-opt}
-\paragraph{Heurística Or-opt.}
-A heurística \textit{Or-opt} busca melhorar a solução atual por meio do deslocamento de 
-subsequências contíguas da rota, normalmente de tamanho 1, 2 ou 3, para outras posições do 
-percurso. Essa operação permite explorar movimentos mais amplos do que simples trocas ou 
-deslocamentos unitários, oferecendo maior flexibilidade para escapar de ótimos locais 
-superficiais. A função \texttt{neighbourhood\_by\_or\_opt} gera todas as soluções vizinhas 
-possíveis ao remover um bloco da rota e reinseri-lo em outra posição válida. Cada vizinho é 
-avaliado com base no custo total, e a melhor solução encontrada é comparada com a solução 
-atual. Caso represente uma melhoria, a solução corrente é atualizada e o processo é repetido. 
-Assim como em \textit{swap} e \textit{shift}, essa heurística opera segundo a estratégia de 
-\textit{best improvement}, avaliando todas as alternativas da vizinhança antes de escolher a
-melhor. A busca finaliza quando nenhuma realocação adicional de subsequências resulta em
-redução do custo, atingindo um ótimo local sob essa vizinhança.
-
-\begin{minted}{rust}
-fn or_opt(&self, graph: &[[f64; N]; N]) -> Self {
-    let mut best_solution: Solution<N> = self.clone();     // solução atual (referência global)
-    let mut found_better_solution = true;                  // controla se há melhorias sucessivas
-
-    while found_better_solution {                          // repetição até nenhuma melhoria ocorrer
-        found_better_solution = false;
-
-        let solutions = best_solution
-            .neighbourhood_by_or_opt(graph);               // gera vizinhança via movimentação de blocos
-
-        let mut tmp_solution = best_solution.clone();      // melhor solução vizinha da iteração
-
-        for s in solutions.iter() {                        // percorre todas as soluções vizinhas
-            if s.cost < tmp_solution.cost {                // verifica se alguma é melhor que a atual
-                tmp_solution = s.clone();                  // atualiza melhor vizinho
-            }
-        }
-
-        if tmp_solution.cost < best_solution.cost {        // se a melhor vizinha melhora a solução...
-            best_solution = tmp_solution;                  // ...atualiza solução global
-            found_better_solution = true;                  // sinaliza que houve melhoria → continua
-        }
-    }
-
-    best_solution                                          // retorna a solução final (ótimo local)
+    neighbours
 }
 \end{minted}
+
