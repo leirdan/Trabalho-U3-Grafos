@@ -44,6 +44,41 @@ Tais funções acima podem ser classificadas de duas formas: \textbf{Best Improv
 
 Mas todas pertencem à categoria de \textbf{Busca Local} por um motivo, elas operam de maneira praticamente idêntica, divergindo apenas na forma em que enxerga e opera sobre sua vizinhança. Dito isso, foram implementadas as heurísticas \texttt{Swap}, \texttt{Shift} e \texttt{Or-opt} da categoria \textbf{Best Improvement} e apenas a \textbf{2-opt} da classe \textbf{First Improvement}. Sendo assim, dada a imensa semelhança entre a implementação das buscas, será dado enfoque na forma no qual estas enxergam sua vizinhança.
 
+\subsubsection{Shift} 
+
+Tal abordagem considera como vizinhança apenas os vizinhos diretos, ignorando os que não fazem fronteira com o nó atual da iteração. Ela escolhe um nó a ser removido e reconecta seus vizinhos, e após isso o insere em uma vizinhança que proporcione um melhor custo para a rota. Tudo isso acontece através da função \texttt{neighbourhood\_by\_shift}.
+
+
+\begin{minted}{rust}
+fn neighbourhood_by_shift(&self, graph: &[[f64; N]; N], start: usize) -> Vec<Self> {
+    let mut solutions: Vec<Solution<N>> = Vec::new();
+    let n = self.route.len();
+
+    if start >= n {
+        return solutions;
+    }
+
+    for target_pos in 0..n {
+        if target_pos == start {
+            continue;
+        }
+
+        let mut new_route = self.route.clone();  // copia a rota atual
+        let elem = new_route.remove(start);      // remove o nó da sua vizinhança
+        new_route.insert(target_pos, elem);      // adiciona ele em outra
+
+        let cost = Self::calculate_cost(&new_route, graph);
+
+        solutions.push(Self {
+            route: new_route,
+            cost,
+        });
+    }
+
+    solutions
+}
+\end{minted}
+
 \subsubsection{Swap} 
 Consiste em gerar uma vizinhança a partir da solução atual por 
 meio da troca entre a cidade localizada em uma posição fixa da rota e cada uma das demais 
@@ -55,11 +90,6 @@ Caso esta solução seja melhor do que a solução corrente, a rota é atualizad
 quando nenhuma troca adicional resulta em redução do custo, configurando um processo 
 com estratégia de \textit{best improvement}, no qual 
 a melhor solução vizinha é sempre escolhida como próximo passo de exploração.
-
-\noindent\textbf{Observação:} Outras heurísticas implementadas que seguem a mesma abordagem
-(\textit{best improvement}) ao varrer toda a vizinhança antes de aceitar uma mudança são
-a heurística \textit{shift} (usando \texttt{neighbourhood\_by\_shift}) e a heurística
-\textit{Or-opt} (usando \texttt{neighbourhood\_by\_or\_opt}).
 
 \begin{minted}{rust}
 fn neighbourhood_by_swap(&self, graph: &[[f64; N]; N], start: usize) -> Vec<Self> {
@@ -95,9 +125,47 @@ Assim como em \textit{swap} e \textit{shift}, essa heurística opera segundo a e
 melhor. A busca finaliza quando nenhuma realocação adicional de subsequências resulta em
 redução do custo, atingindo um ótimo local sob essa vizinhança.
 
+\begin{minted}{rust}
+fn neighbourhood_by_or_opt(&self, graph: &[[f64; N]; N]) -> Vec<Self> {
+    let n = self.route.len();
+    let mut neighbours = Vec::new();
+
+    for seq_len in 1..=3.min(n) {
+        for i in 0..n {
+            if i + seq_len > n {
+                break;
+            }
+
+            for target in 0..n {
+                if target >= i && target < i + seq_len {
+                    continue;
+                }
+
+                let mut new_route = self.route.clone();
+                let sequence: Vec<usize> = new_route.drain(i..(i + seq_len)).collect();
+
+                let insert_pos = if target > i { target - seq_len } else { target };
+
+                if insert_pos <= new_route.len() {
+                    new_route.splice(insert_pos..insert_pos, sequence);
+
+                    let cost = Self::calculate_cost(&new_route, graph);
+
+                    neighbours.push(Solution {
+                        route: new_route,
+                        cost,
+                    });
+                }
+            }
+        }
+    }
+
+    neighbours
+}
+\end{minted}
+
 \subsubsection{2-opt}
-\paragraph{Heurística 2‑opt.}
-A heurística 2‑opt opera removendo duas arestas do ciclo e reconectando os caminhos de forma
+Esta opera removendo duas arestas do ciclo e reconectando os caminhos de forma
 a reverter a ordem dos vértices entre os cortes. Esse operador tende a eliminar cruzamentos
 na rota e promove mudanças estruturais mais significativas que uma simples troca de posições.
 Ao contrário de \textit{swap}, \textit{shift} e \textit{Or-opt} (implementadas aqui com
