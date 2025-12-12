@@ -1,1 +1,38 @@
 \subsection*{Resultados}
+
+Para o Problema do Caixeiro Viajante, executamos cada uma das 12 instâncias do problema 1 vez
+e obtivemos os seguintes resultados, onde NNSWP é uma abreviação para a heurística do
+Vizinho Mais Próximo com a busca local do Swap e NIOPT para a Inserção Mais Próxima com a busca
+local do Or-Opt:
+
+\begin{table}[h!]
+    \centering
+    \caption{Execução das heurísticas}
+    \label{tab:exec}
+    \begin{tabular}{| c | c | c |}
+        \hline
+        Instância & NNSWP & NIOPT \\
+        \hline
+        1 & 2291.4 & 2246.4 \\
+        2 & 2355 & 2223 \\
+        3 & 1936 & 1753.2 \\
+        4 & 1933 & 1810 \\
+        5 & 1379.3 & 1352.5 \\
+        6 & 1283 & 1448 \\
+        7 & 815.5 & 672.7 \\
+        8 & 609 & 606 \\
+        9 & 477.2 & 438.3 \\
+        10 & 403 & 364 \\
+        11 & 348.3 & 348.3 \\
+        12 & 306 & 305 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Com base nesta tabela, podemos perceber que a heurística NIOPT costuma produzir soluções
+melhores que as NNSWP. Contudo, nem sempre esse resultado será consistente, como nos resultados
+da instância 6, onde o NNSWP se sobressaiu. Além disso, em comparação com o algoritmo genético,
+que será apresentado no próximo capítulo, nota-se que com instâncias com dados maiores, as
+soluções diferem bastante, onde o genético se sobressai em relação às heurísticas deste capítulo.
+Por fim, podemos concluir que as heurísticas nem sempre produzirão uma solução ótima, mas
+será provavelmente uma solução boa.
